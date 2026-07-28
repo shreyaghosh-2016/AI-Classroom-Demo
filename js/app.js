@@ -76,7 +76,39 @@ function isGoalNode(node, goals) {
   return goals.has(node);
 }
 
-function makeStep({ current, frontier, explored, parent, costs = {}, explanation, found = false, path = [] }) {
+function createSearchTrace(start) {
+  let nextId = 1;
+  const nodes = [{ uid: 't0', label: start, parentUid: null, depth: 0, expandedOrder: null }];
+
+  return {
+    nodes,
+    add(parentUid, label, depth) {
+      const uid = `t${nextId++}`;
+      nodes.push({ uid, label, parentUid, depth, expandedOrder: null });
+      return uid;
+    },
+    markExpanded(uid, order) {
+      const node = nodes.find((item) => item.uid === uid);
+      if (node && node.expandedOrder == null) node.expandedOrder = order;
+    },
+    snapshot() {
+      return nodes.map((node) => ({ ...node }));
+    }
+  };
+}
+
+function occurrencePath(treeNodes, goalUid) {
+  const byId = new Map(treeNodes.map((node) => [node.uid, node]));
+  const result = [];
+  let current = byId.get(goalUid);
+  while (current) {
+    result.unshift(current.uid);
+    current = current.parentUid ? byId.get(current.parentUid) : null;
+  }
+  return result;
+}
+
+function makeStep({ current, frontier, explored, parent, costs = {}, explanation, found = false, path = [], treeNodes = [], goalUid = null }) {
   return {
     current,
     frontier: frontier.map((item) => typeof item === 'string' ? item : item.node),
@@ -85,61 +117,88 @@ function makeStep({ current, frontier, explored, parent, costs = {}, explanation
     costs: { ...costs },
     explanation,
     found,
-    path: [...path]
+    path: [...path],
+    treeNodes: treeNodes.map((node) => ({ ...node })),
+    goalUid,
+    occurrencePath: goalUid ? occurrencePath(treeNodes, goalUid) : []
   };
 }
 
 function bfs(adjacency, start, goals) {
-  const queue = [start];
+  const trace = createSearchTrace(start);
+  const queue = [{ node: start, uid: 't0', depth: 0 }];
   const discovered = new Set([start]);
   const explored = [];
   const parent = {};
   const steps = [];
+
   while (queue.length) {
-    const before = [...queue];
-    const current = queue.shift();
+    const before = queue.map((item) => item.node);
+    const item = queue.shift();
+    const current = item.node;
     explored.push(current);
+    trace.markExpanded(item.uid, explored.length);
+
     if (isGoalNode(current, goals)) {
       const path = reconstructPath(parent, current);
       steps.push(makeStep({ current, frontier: queue, explored, parent, found: true, path,
+        treeNodes: trace.snapshot(), goalUid: item.uid,
         explanation: `${current} is one of the selected goals. BFS returns the shallowest goal reached.` }));
       return steps;
     }
+
     const added = [];
     for (const neighbor of adjacency[current] ?? []) {
+      const childUid = trace.add(item.uid, neighbor.node, item.depth + 1);
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node); parent[neighbor.node] = current; queue.push(neighbor.node); added.push(neighbor.node);
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        queue.push({ node: neighbor.node, uid: childUid, depth: item.depth + 1 });
+        added.push(neighbor.node);
       }
     }
-    steps.push(makeStep({ current, frontier: queue, explored, parent,
+
+    steps.push(makeStep({ current, frontier: queue, explored, parent, treeNodes: trace.snapshot(),
       explanation: `${current} was removed from FIFO queue [${before.join(', ')}]. ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}` }));
   }
   return steps;
 }
 
 function dfs(adjacency, start, goals) {
-  const stack = [start];
+  const trace = createSearchTrace(start);
+  const stack = [{ node: start, uid: 't0', depth: 0 }];
   const discovered = new Set([start]);
   const explored = [];
   const parent = {};
   const steps = [];
+
   while (stack.length) {
-    const before = [...stack];
-    const current = stack.pop();
+    const before = stack.map((item) => item.node);
+    const item = stack.pop();
+    const current = item.node;
     explored.push(current);
+    trace.markExpanded(item.uid, explored.length);
+
     if (isGoalNode(current, goals)) {
       const path = reconstructPath(parent, current);
       steps.push(makeStep({ current, frontier: stack, explored, parent, found: true, path,
+        treeNodes: trace.snapshot(), goalUid: item.uid,
         explanation: `${current} is one of the selected goals. DFS returns the first goal found by LIFO expansion.` }));
       return steps;
     }
+
     const added = [];
     for (const neighbor of [...(adjacency[current] ?? [])].reverse()) {
+      const childUid = trace.add(item.uid, neighbor.node, item.depth + 1);
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node); parent[neighbor.node] = current; stack.push(neighbor.node); added.push(neighbor.node);
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        stack.push({ node: neighbor.node, uid: childUid, depth: item.depth + 1 });
+        added.push(neighbor.node);
       }
     }
-    steps.push(makeStep({ current, frontier: stack, explored, parent,
+
+    steps.push(makeStep({ current, frontier: stack, explored, parent, treeNodes: trace.snapshot(),
       explanation: `${current} was popped from LIFO stack [${before.join(', ')}]. ${added.length ? `Pushed ${added.join(', ')}.` : 'No new nodes were pushed.'}` }));
   }
   return steps;
@@ -150,7 +209,8 @@ function ids(adjacency, start, goals) {
   const maxDepth = Math.max(0, Object.keys(adjacency).length - 1);
 
   for (let limit = 0; limit <= maxDepth; limit += 1) {
-    const stack = [{ node: start, depth: 0, path: [start] }];
+    const trace = createSearchTrace(start);
+    const stack = [{ node: start, uid: 't0', depth: 0, path: [start] }];
     const exploredThisIteration = [];
     const parent = {};
 
@@ -158,17 +218,12 @@ function ids(adjacency, start, goals) {
       const item = stack.pop();
       const current = item.node;
       exploredThisIteration.push(current);
+      trace.markExpanded(item.uid, exploredThisIteration.length);
 
       if (isGoalNode(current, goals)) {
-        allSteps.push(makeStep({
-          current,
-          frontier: stack,
-          explored: exploredThisIteration,
-          parent,
-          found: true,
-          path: item.path,
-          explanation: `${current} is a selected goal. IDS found it with depth limit ${limit}.`
-        }));
+        allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent,
+          found: true, path: item.path, treeNodes: trace.snapshot(), goalUid: item.uid,
+          explanation: `${current} is a selected goal. IDS found it with depth limit ${limit}.` }));
         return allSteps;
       }
 
@@ -176,123 +231,146 @@ function ids(adjacency, start, goals) {
       if (item.depth < limit) {
         for (const neighbor of [...(adjacency[current] ?? [])].reverse()) {
           if (!item.path.includes(neighbor.node)) {
-            if (parent[neighbor.node] === undefined && neighbor.node !== start) {
-              parent[neighbor.node] = current;
-            }
-            stack.push({
-              node: neighbor.node,
-              depth: item.depth + 1,
-              path: [...item.path, neighbor.node]
-            });
+            const childUid = trace.add(item.uid, neighbor.node, item.depth + 1);
+            stack.push({ node: neighbor.node, uid: childUid, depth: item.depth + 1, path: [...item.path, neighbor.node] });
             children.push(neighbor.node);
           }
         }
       }
 
-      allSteps.push(makeStep({
-        current,
-        frontier: stack,
-        explored: exploredThisIteration,
-        parent,
-        explanation: `IDS depth limit ${limit}: expanded ${current} at depth ${item.depth}. ${item.depth === limit ? 'Depth limit reached.' : children.length ? `Added ${children.join(', ')}.` : 'No child was added.'}`
-      }));
+      allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent,
+        treeNodes: trace.snapshot(),
+        explanation: `IDS depth limit ${limit}: expanded ${current} at depth ${item.depth}. ${item.depth === limit ? 'Depth limit reached.' : children.length ? `Added ${children.join(', ')}.` : 'No child was added.'}` }));
     }
   }
-
   return allSteps;
 }
 
 function ucs(adjacency, start, goals) {
-  const frontier = [{ node: start, priority: 0 }];
+  const trace = createSearchTrace(start);
+  const frontier = [{ node: start, priority: 0, uid: 't0', depth: 0 }];
   const costs = { [start]: 0 };
   const parent = {};
   const explored = [];
   const closed = new Set();
   const steps = [];
+
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
     const currentItem = frontier.shift();
     const current = currentItem.node;
     if (closed.has(current)) continue;
-    closed.add(current); explored.push(current);
+    closed.add(current);
+    explored.push(current);
+    trace.markExpanded(currentItem.uid, explored.length);
+
     if (isGoalNode(current, goals)) {
       const path = reconstructPath(parent, current);
       steps.push(makeStep({ current, frontier, explored, parent, costs, found: true, path,
+        treeNodes: trace.snapshot(), goalUid: currentItem.uid,
         explanation: `${current} is a selected goal with the lowest cumulative cost g(n)=${costs[current]}.` }));
       return steps;
     }
+
     const relaxed = [];
     for (const neighbor of adjacency[current] ?? []) {
+      const childUid = trace.add(currentItem.uid, neighbor.node, currentItem.depth + 1);
       const newCost = costs[current] + neighbor.cost;
       if (newCost < (costs[neighbor.node] ?? Infinity)) {
-        costs[neighbor.node] = newCost; parent[neighbor.node] = current;
-        frontier.push({ node: neighbor.node, priority: newCost }); relaxed.push(`${neighbor.node}: ${newCost}`);
+        costs[neighbor.node] = newCost;
+        parent[neighbor.node] = current;
+        frontier.push({ node: neighbor.node, priority: newCost, uid: childUid, depth: currentItem.depth + 1 });
+        relaxed.push(`${neighbor.node}: ${newCost}`);
       }
     }
-    steps.push(makeStep({ current, frontier, explored, parent, costs,
+
+    steps.push(makeStep({ current, frontier, explored, parent, costs, treeNodes: trace.snapshot(),
       explanation: `UCS expanded ${current} with g(n)=${costs[current]}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No cheaper path was found.'}` }));
   }
   return steps;
 }
 
 function greedy(adjacency, heuristics, start, goals) {
-  const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
+  const trace = createSearchTrace(start);
+  const frontier = [{ node: start, priority: heuristics[start] ?? 0, uid: 't0', depth: 0 }];
   const discovered = new Set([start]);
   const parent = {};
   const explored = [];
   const steps = [];
+
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
-    const current = frontier.shift().node;
+    const item = frontier.shift();
+    const current = item.node;
     explored.push(current);
+    trace.markExpanded(item.uid, explored.length);
+
     if (isGoalNode(current, goals)) {
       const path = reconstructPath(parent, current);
       steps.push(makeStep({ current, frontier, explored, parent, found: true, path,
+        treeNodes: trace.snapshot(), goalUid: item.uid,
         explanation: `${current} is a selected goal. Greedy search stops at the first selected goal reached.` }));
       return steps;
     }
+
     const added = [];
     for (const neighbor of adjacency[current] ?? []) {
+      const childUid = trace.add(item.uid, neighbor.node, item.depth + 1);
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node); parent[neighbor.node] = current;
-        frontier.push({ node: neighbor.node, priority: heuristics[neighbor.node] ?? 0 });
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        frontier.push({ node: neighbor.node, priority: heuristics[neighbor.node] ?? 0, uid: childUid, depth: item.depth + 1 });
         added.push(`${neighbor.node} (h=${heuristics[neighbor.node] ?? 0})`);
       }
     }
-    steps.push(makeStep({ current, frontier, explored, parent,
+
+    steps.push(makeStep({ current, frontier, explored, parent, treeNodes: trace.snapshot(),
       explanation: `Greedy expanded ${current}. ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}` }));
   }
   return steps;
 }
 
 function astar(adjacency, heuristics, start, goals) {
-  const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
+  const trace = createSearchTrace(start);
+  const frontier = [{ node: start, priority: heuristics[start] ?? 0, uid: 't0', depth: 0 }];
   const g = { [start]: 0 };
   const parent = {};
   const explored = [];
   const closed = new Set();
   const steps = [];
+
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
-    const current = frontier.shift().node;
+    const item = frontier.shift();
+    const current = item.node;
     if (closed.has(current)) continue;
-    closed.add(current); explored.push(current);
+    closed.add(current);
+    explored.push(current);
+    trace.markExpanded(item.uid, explored.length);
+
     if (isGoalNode(current, goals)) {
       const path = reconstructPath(parent, current);
       steps.push(makeStep({ current, frontier, explored, parent, costs: g, found: true, path,
+        treeNodes: trace.snapshot(), goalUid: item.uid,
         explanation: `${current} is a selected goal with g(n)=${g[current]}.` }));
       return steps;
     }
+
     const relaxed = [];
     for (const neighbor of adjacency[current] ?? []) {
+      const childUid = trace.add(item.uid, neighbor.node, item.depth + 1);
       const tentative = g[current] + neighbor.cost;
       if (tentative < (g[neighbor.node] ?? Infinity)) {
-        g[neighbor.node] = tentative; parent[neighbor.node] = current; closed.delete(neighbor.node);
+        g[neighbor.node] = tentative;
+        parent[neighbor.node] = current;
+        closed.delete(neighbor.node);
         const f = tentative + (heuristics[neighbor.node] ?? 0);
-        frontier.push({ node: neighbor.node, priority: f }); relaxed.push(`${neighbor.node}: g=${tentative}, f=${f}`);
+        frontier.push({ node: neighbor.node, priority: f, uid: childUid, depth: item.depth + 1 });
+        relaxed.push(`${neighbor.node}: g=${tentative}, f=${f}`);
       }
     }
-    steps.push(makeStep({ current, frontier, explored, parent, costs: g,
+
+    steps.push(makeStep({ current, frontier, explored, parent, costs: g, treeNodes: trace.snapshot(),
       explanation: `A* expanded ${current}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No better route was found.'}` }));
   }
   return steps;
@@ -412,7 +490,7 @@ function renderGraph(step = null) {
     group.append(createSvgElement('circle', { cx: node.x, cy: node.y, r: 31, class: `node-circle ${stateClass}${extra}`, 'data-node-id': node.id }));
     const text = createSvgElement('text', { x: node.x, y: node.y + 1, class: 'node-label', 'data-node-id': node.id }); text.textContent = node.id; group.append(text);
     if (['greedy', 'astar'].includes(elements.algorithm.value)) {
-      const heuristic = createSvgElement('text', { x: node.x, y: node.y + 51, class: 'node-heuristic' }); heuristic.textContent = `h=${node.h}`; group.append(heuristic);
+      const heuristic = createSvgElement('text', { x: node.x, y: node.y + 51, class: 'node-heuristic' }); heuristic.textContent = `h=${selectedGoals.has(node.id) ? 0 : node.h}`; group.append(heuristic);
     }
     nodeLayer.append(group);
   }
@@ -429,49 +507,20 @@ function hideSearchTree() {
 function renderSearchTree(finalStep) {
   if (!finalStep || !elements.searchTreePanel || !elements.searchTreeSvg) return;
 
-  const startNode = elements.start.value;
-  const parent = finalStep.parent ?? {};
-  const included = new Set([startNode, ...(finalStep.explored ?? []), ...(finalStep.frontier ?? [])]);
-  Object.entries(parent).forEach(([child, parentNode]) => {
-    included.add(child);
-    included.add(parentNode);
-  });
-
-  const children = new Map([...included].map((id) => [id, []]));
-  Object.entries(parent).forEach(([child, parentNode]) => {
-    if (included.has(child) && included.has(parentNode)) {
-      children.get(parentNode)?.push(child);
-    }
-  });
-  children.forEach((items) => items.sort((a, b) => a.localeCompare(b)));
-
-  const depth = new Map([[startNode, 0]]);
-  const queue = [startNode];
-  while (queue.length) {
-    const current = queue.shift();
-    for (const child of children.get(current) ?? []) {
-      if (!depth.has(child)) {
-        depth.set(child, depth.get(current) + 1);
-        queue.push(child);
-      }
-    }
-  }
-  for (const id of included) {
-    if (!depth.has(id)) depth.set(id, 0);
-  }
+  const treeNodes = finalStep.treeNodes ?? [];
+  if (!treeNodes.length) return;
 
   const levels = new Map();
-  for (const id of included) {
-    const level = depth.get(id) ?? 0;
-    if (!levels.has(level)) levels.set(level, []);
-    levels.get(level).push(id);
-  }
-  levels.forEach((items) => items.sort((a, b) => a.localeCompare(b)));
+  treeNodes.forEach((node, generatedIndex) => {
+    const enriched = { ...node, generatedIndex };
+    if (!levels.has(node.depth)) levels.set(node.depth, []);
+    levels.get(node.depth).push(enriched);
+  });
 
   const levelNumbers = [...levels.keys()].sort((a, b) => a - b);
   const maxLevelSize = Math.max(1, ...levelNumbers.map((level) => levels.get(level).length));
-  const horizontalGap = 125;
-  const verticalGap = 115;
+  const horizontalGap = 105;
+  const verticalGap = 112;
   const paddingX = 70;
   const paddingY = 60;
   const width = Math.max(900, maxLevelSize * horizontalGap + paddingX * 2);
@@ -482,29 +531,32 @@ function renderSearchTree(finalStep) {
 
   const positions = new Map();
   for (const level of levelNumbers) {
-    const nodes = levels.get(level);
+    const nodes = levels.get(level).sort((a, b) => a.generatedIndex - b.generatedIndex);
     const usableWidth = width - paddingX * 2;
     const spacing = usableWidth / (nodes.length + 1);
-    nodes.forEach((id, index) => {
-      positions.set(id, {
+
+    nodes.forEach((node, index) => {
+      positions.set(node.uid, {
         x: paddingX + spacing * (index + 1),
         y: paddingY + level * verticalGap
       });
     });
   }
 
-  const pathNodes = new Set(finalStep.path ?? []);
-  const pathEdges = new Set();
-  for (let index = 0; index < (finalStep.path?.length ?? 0) - 1; index += 1) {
-    pathEdges.add(`${finalStep.path[index]}::${finalStep.path[index + 1]}`);
+  const solutionOccurrenceNodes = new Set(finalStep.occurrencePath ?? []);
+  const solutionOccurrenceEdges = new Set();
+  for (let index = 0; index < (finalStep.occurrencePath?.length ?? 0) - 1; index += 1) {
+    solutionOccurrenceEdges.add(`${finalStep.occurrencePath[index]}::${finalStep.occurrencePath[index + 1]}`);
   }
 
   const edgeLayer = createSvgElement('g', { class: 'search-tree-edges' });
-  Object.entries(parent).forEach(([child, parentNode]) => {
-    const from = positions.get(parentNode);
-    const to = positions.get(child);
+  treeNodes.forEach((node) => {
+    if (!node.parentUid) return;
+    const from = positions.get(node.parentUid);
+    const to = positions.get(node.uid);
     if (!from || !to) return;
-    const isPath = pathEdges.has(`${parentNode}::${child}`);
+
+    const isPath = solutionOccurrenceEdges.has(`${node.parentUid}::${node.uid}`);
     edgeLayer.append(createSvgElement('path', {
       d: `M ${from.x} ${from.y + 29} C ${from.x} ${(from.y + to.y) / 2}, ${to.x} ${(from.y + to.y) / 2}, ${to.x} ${to.y - 29}`,
       class: `search-tree-edge${isPath ? ' solution-edge' : ''}`
@@ -512,40 +564,38 @@ function renderSearchTree(finalStep) {
   });
   elements.searchTreeSvg.append(edgeLayer);
 
-  const expansionIndex = new Map();
-  (finalStep.explored ?? []).forEach((id, index) => {
-    if (!expansionIndex.has(id)) expansionIndex.set(id, index + 1);
-  });
-
   const nodeLayer = createSvgElement('g', { class: 'search-tree-nodes' });
-  for (const id of included) {
-    const position = positions.get(id);
-    if (!position) continue;
+  treeNodes.forEach((node) => {
+    const position = positions.get(node.uid);
+    if (!position) return;
+
     const group = createSvgElement('g', { transform: `translate(${position.x}, ${position.y})` });
     const classes = ['search-tree-node'];
-    if (id === startNode) classes.push('start-node');
-    if (selectedGoals.has(id)) classes.push('goal-node');
-    if (pathNodes.has(id)) classes.push('solution-node');
-    if (id === finalStep.current && finalStep.found) classes.push('reached-goal');
+    if (node.parentUid === null) classes.push('start-node');
+    if (selectedGoals.has(node.label)) classes.push('goal-node');
+    if (solutionOccurrenceNodes.has(node.uid)) classes.push('solution-node');
+    if (node.uid === finalStep.goalUid && finalStep.found) classes.push('reached-goal');
 
     group.append(createSvgElement('circle', { cx: 0, cy: 0, r: 28, class: classes.join(' ') }));
+
     const label = createSvgElement('text', { x: 0, y: 5, class: 'search-tree-node-label' });
-    label.textContent = id;
+    label.textContent = node.label;
     group.append(label);
 
-    if (expansionIndex.has(id)) {
+    if (node.expandedOrder != null) {
       const order = createSvgElement('text', { x: 0, y: 45, class: 'search-tree-order-label' });
-      order.textContent = `#${expansionIndex.get(id)}`;
+      order.textContent = `#${node.expandedOrder}`;
       group.append(order);
     }
+
     nodeLayer.append(group);
-  }
+  });
   elements.searchTreeSvg.append(nodeLayer);
 
   elements.searchTreePanel.classList.remove('hidden');
   elements.searchTreeMessage.textContent = finalStep.found
-    ? `${elements.algorithm.options[elements.algorithm.selectedIndex].text} reached goal ${finalStep.current}. The highlighted branch is the returned solution path.`
-    : 'The search finished without reaching any selected goal. The tree shows all discovered states.';
+    ? `${elements.algorithm.options[elements.algorithm.selectedIndex].text} reached goal ${finalStep.current}. Repeated state labels are shown separately whenever they are generated from different parent nodes.`
+    : 'The search finished without reaching a selected goal. Repeated state labels are shown as separate search-tree occurrences.';
 
   elements.searchExpansionOrder.replaceChildren();
   (finalStep.explored ?? []).forEach((id, index) => {
@@ -561,7 +611,7 @@ function computeSteps() {
   const start = elements.start.value;
   const goals = new Set(selectedGoals);
   if (!start || !goals.size) return [];
-  const heuristics = Object.fromEntries(graph.nodes.map((node) => [node.id, node.h]));
+  const heuristics = Object.fromEntries(graph.nodes.map((node) => [node.id, goals.has(node.id) ? 0 : node.h]));
   switch (elements.algorithm.value) {
     case 'dfs': return dfs(adjacency, start, goals);
     case 'ids': return ids(adjacency, start, goals);
