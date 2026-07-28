@@ -256,3 +256,38 @@ button.module-card:hover { transform: translateY(-4px); border-color: var(--acce
 .queens-layout{display:grid;grid-template-columns:minmax(320px,560px) minmax(180px,1fr);gap:1.25rem;align-items:start}.queens-board{display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;border:4px solid var(--text);border-radius:8px;overflow:hidden}.queen-square{border:0;border-radius:0;padding:0;display:grid;place-items:center;font-size:clamp(1.4rem,4vw,2.5rem);min-width:0}.queen-square:hover{transform:none;border:0;filter:brightness(1.08)}.light-square{background:#ead9b7}.dark-square{background:#7f5d45}.has-queen{color:#111;text-shadow:0 1px 0 white}.queen-conflict{background:#ef6767;color:white}.queen-stats{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}.queen-stats>div{padding:.85rem;border:1px solid var(--border);border-radius:14px;background:var(--panel-alt)}.queen-stats span{display:block;color:var(--muted);font-size:.75rem}.queen-stats strong{font-size:1.2rem}.state-code-block{display:block;padding:1rem;border-radius:12px;background:var(--panel-alt);border:1px solid var(--border);font-size:1rem;overflow-wrap:anywhere}
 @media(max-width:900px){.demo-grid{grid-template-columns:1fr}.demo-sidebar{border-right:0;border-bottom:1px solid var(--border);display:grid;grid-template-columns:1fr 1fr;gap:.65rem}.definition-card+.definition-card{margin-top:0}.queens-layout{grid-template-columns:1fr}.queen-stats{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:650px){.demo-intro{flex-direction:column}.demo-state-code{white-space:normal}.demo-sidebar{grid-template-columns:1fr}.action-controls{grid-template-columns:1fr 1fr}.jug-stage{gap:.8rem}.jug-vessel{width:105px}.jug-four{height:175px}.jug-three{height:140px}.transfer-symbol{font-size:1.7rem}.puzzle-comparison{grid-template-columns:1fr;gap:1rem}.puzzle-board{grid-template-columns:repeat(3,65px);grid-template-rows:repeat(3,65px)}.queen-stats{grid-template-columns:1fr 1fr}}
+/* Add these rules at the END of your existing styles.css */
+
+.jug-history-entry {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.25rem;
+  vertical-align: top;
+}
+
+.jug-history-entry small {
+  max-width: 130px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.considered-square {
+  outline: 4px solid var(--accent);
+  outline-offset: -4px;
+}
+
+.goal-text {
+  color: #16a34a;
+}
+
+.action-controls button:disabled,
+.demo-controls button:disabled,
+.puzzle-tile:disabled,
+.queen-square:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
