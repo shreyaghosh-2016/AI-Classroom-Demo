@@ -49,8 +49,17 @@
           <span class="module-link">Open visualizer →</span>
         </button>
 
-        <article class="module-card locked-module" aria-disabled="true">
+        <button class="module-card live-module" type="button" data-view="mazeView">
           <span class="module-number">03</span>
+          <span class="module-icon" aria-hidden="true">🧭</span>
+          <span class="module-status live">Live</span>
+          <strong>Maze Search</strong>
+          <span class="module-description">Compare how BFS, DFS, and IDS explore the same maze and discover a route to the goal.</span>
+          <span class="module-link">Open maze visualizer →</span>
+        </button>
+
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">04</span>
           <span class="module-icon" aria-hidden="true">🗺️</span>
           <span class="module-status soon">Coming soon</span>
           <strong>Planning</strong>
@@ -58,7 +67,7 @@
         </article>
 
         <article class="module-card locked-module" aria-disabled="true">
-          <span class="module-number">04</span>
+          <span class="module-number">05</span>
           <span class="module-icon" aria-hidden="true">🎯</span>
           <span class="module-status soon">Coming soon</span>
           <strong>Reinforcement Learning</strong>
@@ -66,7 +75,7 @@
         </article>
 
         <article class="module-card locked-module" aria-disabled="true">
-          <span class="module-number">05</span>
+          <span class="module-number">06</span>
           <span class="module-icon" aria-hidden="true">✨</span>
           <span class="module-status soon">Coming soon</span>
           <strong>Generative AI</strong>
@@ -414,9 +423,94 @@
         </section>
       </div>
     </section>
+
+
+    <section id="mazeView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 03</p>
+          <h1>Maze Search Visualizer</h1>
+          <p class="subtitle">Watch BFS, DFS, and IDS explore identical maze states using different frontier strategies.</p>
+        </div>
+      </div>
+
+      <div class="maze-layout">
+        <aside class="control-panel maze-controls" aria-label="Maze visualization controls">
+          <section>
+            <h2>Configuration</h2>
+            <label for="mazeAlgorithm">Algorithm</label>
+            <select id="mazeAlgorithm">
+              <option value="bfs">Breadth-First Search</option>
+              <option value="dfs">Depth-First Search</option>
+              <option value="ids">Iterative Deepening Search</option>
+            </select>
+            <label for="mazeSpeed">Animation speed</label>
+            <div class="range-row"><span>Slow</span><input id="mazeSpeed" type="range" min="10" max="180" value="65" step="5" /><span>Fast</span></div>
+          </section>
+
+          <section>
+            <h2>Controls</h2>
+            <div class="button-grid">
+              <button id="mazeRun" class="primary-button" type="button">Run</button>
+              <button id="mazeStep" type="button">Next step</button>
+              <button id="mazePause" type="button">Pause</button>
+              <button id="mazeReset" type="button">Reset search</button>
+            </div>
+          </section>
+
+          <section>
+            <h2>Maze source</h2>
+            <div class="button-grid">
+              <button id="mazeDefault" type="button">Default maze</button>
+              <button id="mazeRandom" type="button">New random maze</button>
+            </div>
+            <p class="editor-help">The same maze can be reused with different algorithms for a fair comparison.</p>
+          </section>
+
+          <section>
+            <h2>Legend</h2>
+            <ul class="maze-legend">
+              <li><span class="maze-key wall"></span>Wall</li>
+              <li><span class="maze-key frontier"></span>Frontier</li>
+              <li><span class="maze-key explored"></span>Explored</li>
+              <li><span class="maze-key current"></span>Current</li>
+              <li><span class="maze-key path"></span>Final path</li>
+              <li><span class="maze-key start"></span>Start</li>
+              <li><span class="maze-key goal"></span>Goal</li>
+            </ul>
+          </section>
+        </aside>
+
+        <section class="maze-workspace">
+          <div class="graph-toolbar">
+            <div><h2 id="mazeTitle">Breadth-First Search</h2><p id="mazeSummary">BFS expands cells level by level using a FIFO queue.</p></div>
+            <div class="status-badge" id="mazeStatus" aria-live="polite">Ready</div>
+          </div>
+
+          <div class="maze-shell">
+            <div id="mazeGrid" class="maze-grid" role="grid" aria-label="Maze search grid"></div>
+          </div>
+
+          <div class="metrics-grid maze-metrics" aria-live="polite">
+            <article class="metric-card"><span>Current cell</span><strong id="mazeCurrent">—</strong></article>
+            <article class="metric-card"><span>Nodes expanded</span><strong id="mazeExpanded">0</strong></article>
+            <article class="metric-card"><span>Frontier size</span><strong id="mazeFrontierSize">0</strong></article>
+            <article class="metric-card"><span>Path length</span><strong id="mazePathLength">—</strong></article>
+            <article class="metric-card"><span>Depth limit</span><strong id="mazeDepthLimit">—</strong></article>
+          </div>
+
+          <div class="details-grid">
+            <article class="detail-card"><h3>Frontier preview</h3><div id="mazeFrontier" class="token-list"><span class="empty-token">Empty</span></div></article>
+            <article class="detail-card"><h3>Expansion order</h3><div id="mazeOrder" class="token-list"><span class="empty-token">Empty</span></div></article>
+            <article class="detail-card explanation-card"><h3>What happened?</h3><p id="mazeExplanation">Choose an algorithm and press Run or Next step.</p></article>
+          </div>
+        </section>
+      </div>
+    </section>
+
   </main>
 
   <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
-  <script defer src="./js/app.js?v=20260729-2"></script>
+  <script defer src="./js/app.js?v=20260729-3"></script>
 </body>
 </html>

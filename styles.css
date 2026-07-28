@@ -740,3 +740,28 @@ button.puzzle-tile:hover {
     min-width: 760px;
   }
 }
+
+
+/* Maze search visualizer */
+.maze-layout { display: grid; grid-template-columns: minmax(245px, 310px) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.maze-controls { position: sticky; top: 86px; }
+.maze-workspace { min-width: 0; }
+.maze-shell { padding: 0.75rem; overflow: auto; border: 1px solid var(--border); border-radius: 18px; background: #111827; box-shadow: var(--shadow); }
+.maze-grid { --maze-cols: 31; display: grid; grid-template-columns: repeat(var(--maze-cols), minmax(13px, 1fr)); width: min(100%, 1040px); min-width: 690px; aspect-ratio: 31 / 21; margin: 0 auto; gap: 1px; background: #0b1020; }
+.maze-cell { display: grid; place-items: center; min-width: 0; background: #eef2f7; color: #fff; font-size: clamp(0.45rem, 1vw, 0.78rem); font-weight: 900; transition: background 90ms ease, transform 90ms ease; }
+.maze-cell.wall { background: #202735; }
+.maze-cell.explored { background: #38bdf8; }
+.maze-cell.frontier { background: #facc15; }
+.maze-cell.current { background: #fb923c; transform: scale(1.08); z-index: 2; }
+.maze-cell.path { background: #22c55e; }
+.maze-cell.start { background: #16a34a; }
+.maze-cell.goal { background: #ef4444; }
+.maze-cell.start.path, .maze-cell.goal.path { outline: 2px solid #fff; outline-offset: -2px; }
+.maze-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+.maze-legend li { display: flex; align-items: center; gap: 0.45rem; font-size: 0.82rem; }
+.maze-key { width: 1rem; height: 1rem; border-radius: 4px; border: 1px solid rgba(0,0,0,.18); }
+.maze-key.wall { background: #202735; } .maze-key.frontier { background: #facc15; } .maze-key.explored { background: #38bdf8; }
+.maze-key.current { background: #fb923c; } .maze-key.path { background: #22c55e; } .maze-key.start { background: #16a34a; } .maze-key.goal { background: #ef4444; }
+.maze-metrics { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1000px) { .maze-layout { grid-template-columns: 1fr; } .maze-controls { position: static; } .maze-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 650px) { .maze-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .maze-grid { min-width: 620px; } }

@@ -391,7 +391,7 @@ const elements = {
   searchTreeMessage: document.querySelector('#searchTreeMessage'), searchExpansionOrder: document.querySelector('#searchExpansionOrder')
 };
 
-const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView') };
+const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView'), mazeView: document.querySelector('#mazeView') };
 const homeButton = document.querySelector('#homeButton');
 const brandButton = document.querySelector('#brandButton');
 
@@ -399,7 +399,7 @@ function showView(viewId) {
   stopTimer(); stopProblemDemos();
   Object.entries(views).forEach(([id, view]) => { view.classList.toggle('hidden', id !== viewId); view.classList.toggle('view-active', id === viewId); });
   homeButton.classList.toggle('hidden', viewId === 'homeView');
-  document.title = viewId === 'homeView' ? 'AI Course (IIT BBSR)' : viewId === 'problemView' ? 'Automated Problem Solving | AI Course (IIT BBSR)' : 'Search Techniques | AI Course (IIT BBSR)';
+  document.title = viewId === 'homeView' ? 'AI Course (IIT BBSR)' : viewId === 'problemView' ? 'Automated Problem Solving | AI Course (IIT BBSR)' : viewId === 'mazeView' ? 'Maze Search | AI Course (IIT BBSR)' : 'Search Techniques | AI Course (IIT BBSR)';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (viewId === 'searchView') renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
 }
@@ -2067,7 +2067,207 @@ function initEightQueensDemo() {
   render('Place queens manually, or watch backtracking explore the state space.');
 }
 
+
+/* =========================================================
+   MAZE SEARCH VISUALIZER
+   ========================================================= */
+function initMazeVisualizer() {
+  const el = {
+    grid: document.querySelector('#mazeGrid'), algorithm: document.querySelector('#mazeAlgorithm'), speed: document.querySelector('#mazeSpeed'),
+    run: document.querySelector('#mazeRun'), step: document.querySelector('#mazeStep'), pause: document.querySelector('#mazePause'), reset: document.querySelector('#mazeReset'),
+    defaultMaze: document.querySelector('#mazeDefault'), randomMaze: document.querySelector('#mazeRandom'), title: document.querySelector('#mazeTitle'),
+    summary: document.querySelector('#mazeSummary'), status: document.querySelector('#mazeStatus'), current: document.querySelector('#mazeCurrent'),
+    expanded: document.querySelector('#mazeExpanded'), frontierSize: document.querySelector('#mazeFrontierSize'), pathLength: document.querySelector('#mazePathLength'),
+    depthLimit: document.querySelector('#mazeDepthLimit'), frontier: document.querySelector('#mazeFrontier'), order: document.querySelector('#mazeOrder'),
+    explanation: document.querySelector('#mazeExplanation')
+  };
+  if (!Object.values(el).every(Boolean)) return;
+
+  const ROWS = 21, COLS = 31;
+  const start = [1, 1], goal = [ROWS - 2, COLS - 2];
+  const key = ([r, c]) => `${r},${c}`;
+  const parse = (value) => value.split(',').map(Number);
+  const dirs = [[-1,0],[0,1],[1,0],[0,-1]];
+  let maze = [];
+  let trace = [];
+  let traceIndex = -1;
+  let timer = null;
+
+  const summaries = {
+    bfs: 'BFS expands cells level by level using a FIFO queue and finds a shortest path in an unweighted maze.',
+    dfs: 'DFS follows one branch deeply using a LIFO stack, then backtracks when necessary.',
+    ids: 'IDS repeats depth-limited DFS with limits 0, 1, 2, … until a goal is reached.'
+  };
+
+  function blankMaze() {
+    return Array.from({ length: ROWS }, (_, r) => Array.from({ length: COLS }, (_, c) => r === 0 || c === 0 || r === ROWS - 1 || c === COLS - 1 ? 1 : 0));
+  }
+
+  function generatePerfectMaze(seedDefault = false) {
+    const grid = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
+    const stack = [[1, 1]];
+    grid[1][1] = 0;
+    const rand = seedDefault ? (() => { let s = 24681357; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; })() : Math.random;
+    const moves = [[-2,0],[0,2],[2,0],[0,-2]];
+    while (stack.length) {
+      const [r,c] = stack[stack.length - 1];
+      const options = moves.map(([dr,dc]) => [r+dr,c+dc,dr,dc]).filter(([nr,nc]) => nr > 0 && nr < ROWS - 1 && nc > 0 && nc < COLS - 1 && grid[nr][nc] === 1);
+      if (!options.length) { stack.pop(); continue; }
+      const chosen = options[Math.floor(rand() * options.length)];
+      const [nr,nc,dr,dc] = chosen;
+      grid[r + dr/2][c + dc/2] = 0;
+      grid[nr][nc] = 0;
+      stack.push([nr,nc]);
+    }
+    grid[start[0]][start[1]] = 0;
+    grid[goal[0]][goal[1]] = 0;
+    return grid;
+  }
+
+  function neighbors(cell) {
+    const [r,c] = cell;
+    return dirs.map(([dr,dc]) => [r+dr,c+dc]).filter(([nr,nc]) => nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && maze[nr][nc] === 0);
+  }
+
+  function reconstruct(parent, endKey) {
+    const path = [];
+    let current = endKey;
+    while (current) { path.unshift(parse(current)); current = parent[current]; }
+    return path;
+  }
+
+  function snapshot(current, frontier, explored, parent, explanation, found = false, path = [], limit = null) {
+    return { current, frontier: frontier.map(item => item.cell ?? item), explored: [...explored].map(parse), explanation, found, path, limit };
+  }
+
+  function buildBfs() {
+    const queue = [start];
+    const discovered = new Set([key(start)]), explored = [], parent = {}, steps = [];
+    while (queue.length) {
+      const current = queue.shift(), ck = key(current);
+      explored.push(ck);
+      if (ck === key(goal)) { const path = reconstruct(parent, ck); steps.push(snapshot(current, queue, explored, parent, 'Goal reached. BFS returns a shortest path.', true, path)); return steps; }
+      const added = [];
+      for (const next of neighbors(current)) { const nk = key(next); if (!discovered.has(nk)) { discovered.add(nk); parent[nk] = ck; queue.push(next); added.push(nk); } }
+      steps.push(snapshot(current, queue, explored, parent, added.length ? `Expanded ${ck}; enqueued ${added.join(', ')}.` : `Expanded ${ck}; no new cell was added.`));
+    }
+    return steps;
+  }
+
+  function buildDfs() {
+    const stack = [start];
+    const discovered = new Set([key(start)]), explored = [], parent = {}, steps = [];
+    while (stack.length) {
+      const current = stack.pop(), ck = key(current);
+      explored.push(ck);
+      if (ck === key(goal)) { const path = reconstruct(parent, ck); steps.push(snapshot(current, stack, explored, parent, 'Goal reached. DFS returns the first route found.', true, path)); return steps; }
+      const added = [];
+      for (const next of [...neighbors(current)].reverse()) { const nk = key(next); if (!discovered.has(nk)) { discovered.add(nk); parent[nk] = ck; stack.push(next); added.push(nk); } }
+      steps.push(snapshot(current, stack, explored, parent, added.length ? `Expanded ${ck}; pushed ${added.join(', ')} onto the stack.` : `Expanded ${ck}; reached a dead end.`));
+    }
+    return steps;
+  }
+
+  function buildIds() {
+    const steps = [];
+    const maxDepth = ROWS * COLS;
+    for (let limit = 0; limit <= maxDepth; limit++) {
+      const stack = [{ cell: start, depth: 0, path: [start] }];
+      const explored = [];
+      while (stack.length) {
+        const item = stack.pop(), ck = key(item.cell);
+        explored.push(ck);
+        if (ck === key(goal)) { steps.push(snapshot(item.cell, stack, explored, {}, `Goal reached at depth limit ${limit}.`, true, item.path, limit)); return steps; }
+        const added = [];
+        if (item.depth < limit) {
+          for (const next of [...neighbors(item.cell)].reverse()) {
+            if (!item.path.some(p => key(p) === key(next))) { stack.push({ cell: next, depth: item.depth + 1, path: [...item.path, next] }); added.push(key(next)); }
+          }
+        }
+        steps.push(snapshot(item.cell, stack, explored, {}, item.depth === limit ? `Depth limit ${limit}: reached the cutoff at ${ck}.` : added.length ? `Depth limit ${limit}: expanded ${ck}.` : `Depth limit ${limit}: dead end at ${ck}.`, false, [], limit));
+      }
+    }
+    return steps;
+  }
+
+  function buildTrace() {
+    if (el.algorithm.value === 'dfs') return buildDfs();
+    if (el.algorithm.value === 'ids') return buildIds();
+    return buildBfs();
+  }
+
+  function setTokens(container, values, max = 28) {
+    container.replaceChildren();
+    if (!values.length) { const span = document.createElement('span'); span.className = 'empty-token'; span.textContent = 'Empty'; container.append(span); return; }
+    values.slice(-max).forEach(value => { const span = document.createElement('span'); span.className = 'token'; span.textContent = Array.isArray(value) ? `(${value[0]},${value[1]})` : value; container.append(span); });
+  }
+
+  function render(step = null) {
+    const explored = new Set((step?.explored ?? []).map(key));
+    const frontier = new Set((step?.frontier ?? []).map(key));
+    const path = new Set((step?.path ?? []).map(key));
+    const currentKey = step?.current ? key(step.current) : null;
+    el.grid.style.setProperty('--maze-cols', COLS);
+    el.grid.replaceChildren();
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      const k = `${r},${c}`;
+      cell.className = 'maze-cell';
+      if (maze[r][c] === 1) cell.classList.add('wall');
+      else if (explored.has(k)) cell.classList.add('explored');
+      if (frontier.has(k)) cell.classList.add('frontier');
+      if (path.has(k)) cell.classList.add('path');
+      if (k === currentKey) cell.classList.add('current');
+      if (k === key(start)) { cell.classList.add('start'); cell.textContent = 'S'; }
+      if (k === key(goal)) { cell.classList.add('goal'); cell.textContent = 'G'; }
+      el.grid.append(cell);
+    }
+    const name = { bfs: 'Breadth-First Search', dfs: 'Depth-First Search', ids: 'Iterative Deepening Search' }[el.algorithm.value];
+    el.title.textContent = name; el.summary.textContent = summaries[el.algorithm.value];
+    el.current.textContent = step?.current ? `(${step.current[0]}, ${step.current[1]})` : '—';
+    el.expanded.textContent = String(step?.explored.length ?? 0);
+    el.frontierSize.textContent = String(step?.frontier.length ?? 0);
+    el.pathLength.textContent = step?.found ? String(Math.max(0, step.path.length - 1)) : '—';
+    el.depthLimit.textContent = step?.limit ?? '—';
+    el.explanation.textContent = step?.explanation ?? 'Choose an algorithm and press Run or Next step.';
+    setTokens(el.frontier, step?.frontier ?? []);
+    setTokens(el.order, step?.explored ?? []);
+    if (!step) el.status.textContent = 'Ready'; else if (step.found) el.status.textContent = 'Goal found'; else el.status.textContent = 'Searching';
+  }
+
+  function stop() { if (timer) clearInterval(timer); timer = null; el.run.textContent = 'Run'; }
+  function resetSearch(message = 'Search reset. The maze is unchanged.') { stop(); trace = buildTrace(); traceIndex = -1; render(); el.explanation.textContent = message; }
+  function advance() {
+    if (!trace.length) trace = buildTrace();
+    if (traceIndex >= trace.length - 1) { stop(); return false; }
+    traceIndex += 1; render(trace[traceIndex]);
+    if (trace[traceIndex].found || traceIndex === trace.length - 1) { stop(); return false; }
+    return true;
+  }
+  function startRun() {
+    if (timer) { stop(); el.status.textContent = 'Paused'; return; }
+    if (traceIndex >= trace.length - 1) resetSearch();
+    el.run.textContent = 'Running…';
+    const delay = Math.max(8, 190 - Number(el.speed.value));
+    timer = setInterval(() => { if (!advance()) stop(); }, delay);
+  }
+
+  el.run.addEventListener('click', startRun);
+  el.pause.addEventListener('click', () => { stop(); el.status.textContent = 'Paused'; });
+  el.step.addEventListener('click', () => { stop(); advance(); });
+  el.reset.addEventListener('click', () => resetSearch());
+  el.algorithm.addEventListener('change', () => resetSearch('Algorithm changed. The same maze is ready for comparison.'));
+  el.defaultMaze.addEventListener('click', () => { maze = generatePerfectMaze(true); resetSearch('Default maze loaded.'); });
+  el.randomMaze.addEventListener('click', () => { maze = generatePerfectMaze(false); resetSearch('A new random maze was generated.'); });
+  el.speed.addEventListener('input', () => { if (timer) { stop(); startRun(); } });
+
+  maze = generatePerfectMaze(true);
+  resetSearch('Default maze loaded. Choose BFS, DFS, or IDS.');
+}
+
+
 initProblemTabs();
 initTwoJugDemo();
 initEightPuzzleDemo();
 initEightQueensDemo();
+initMazeVisualizer();
