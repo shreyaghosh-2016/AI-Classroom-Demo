@@ -628,3 +628,115 @@ button.puzzle-tile:hover {
 
 #graphSvg.drawing-mode { cursor: crosshair; }
 .muted-control { opacity: 0.55; }
+
+/* Search tree shown after the search finishes */
+.search-tree-panel {
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.search-tree-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.search-tree-heading h2,
+.search-tree-panel h3 {
+  margin-top: 0;
+}
+
+.search-tree-heading p:last-child {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.search-tree-shell {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--panel-alt);
+}
+
+#searchTreeSvg {
+  display: block;
+  width: 100%;
+  min-width: 900px;
+  min-height: 360px;
+}
+
+.search-tree-edge {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+  opacity: 0.8;
+}
+
+.search-tree-edge.solution-edge {
+  stroke: #16a34a;
+  stroke-width: 5;
+  opacity: 1;
+}
+
+.search-tree-node {
+  fill: var(--panel);
+  stroke: #64748b;
+  stroke-width: 2.5;
+}
+
+.search-tree-node.start-node {
+  fill: #fee2e2;
+  stroke: #ef4444;
+  stroke-width: 4;
+}
+
+.search-tree-node.goal-node {
+  stroke: #dc2626;
+  stroke-width: 4;
+}
+
+.search-tree-node.solution-node {
+  fill: #dcfce7;
+  stroke: #16a34a;
+  stroke-width: 4;
+}
+
+.search-tree-node.reached-goal {
+  fill: #fde68a;
+  stroke: #dc2626;
+  stroke-width: 5;
+}
+
+.search-tree-node-label {
+  fill: var(--text);
+  font-size: 16px;
+  font-weight: 900;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.search-tree-order-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-anchor: middle;
+  pointer-events: none;
+}
+
+.search-order-token {
+  min-width: 52px;
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  #searchTreeSvg {
+    min-width: 760px;
+  }
+}

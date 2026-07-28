@@ -148,31 +148,57 @@ function dfs(adjacency, start, goals) {
 function ids(adjacency, start, goals) {
   const allSteps = [];
   const maxDepth = Math.max(0, Object.keys(adjacency).length - 1);
+
   for (let limit = 0; limit <= maxDepth; limit += 1) {
     const stack = [{ node: start, depth: 0, path: [start] }];
     const exploredThisIteration = [];
+    const parent = {};
+
     while (stack.length) {
       const item = stack.pop();
       const current = item.node;
       exploredThisIteration.push(current);
+
       if (isGoalNode(current, goals)) {
-        allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent: {}, found: true, path: item.path,
-          explanation: `${current} is a selected goal. IDS found it with depth limit ${limit}.` }));
+        allSteps.push(makeStep({
+          current,
+          frontier: stack,
+          explored: exploredThisIteration,
+          parent,
+          found: true,
+          path: item.path,
+          explanation: `${current} is a selected goal. IDS found it with depth limit ${limit}.`
+        }));
         return allSteps;
       }
+
       const children = [];
       if (item.depth < limit) {
         for (const neighbor of [...(adjacency[current] ?? [])].reverse()) {
           if (!item.path.includes(neighbor.node)) {
-            stack.push({ node: neighbor.node, depth: item.depth + 1, path: [...item.path, neighbor.node] });
+            if (parent[neighbor.node] === undefined && neighbor.node !== start) {
+              parent[neighbor.node] = current;
+            }
+            stack.push({
+              node: neighbor.node,
+              depth: item.depth + 1,
+              path: [...item.path, neighbor.node]
+            });
             children.push(neighbor.node);
           }
         }
       }
-      allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent: {},
-        explanation: `IDS depth limit ${limit}: expanded ${current} at depth ${item.depth}. ${item.depth === limit ? 'Depth limit reached.' : children.length ? `Added ${children.join(', ')}.` : 'No child was added.'}` }));
+
+      allSteps.push(makeStep({
+        current,
+        frontier: stack,
+        explored: exploredThisIteration,
+        parent,
+        explanation: `IDS depth limit ${limit}: expanded ${current} at depth ${item.depth}. ${item.depth === limit ? 'Depth limit reached.' : children.length ? `Added ${children.join(', ')}.` : 'No child was added.'}`
+      }));
     }
   }
+
   return allSteps;
 }
 
@@ -282,7 +308,9 @@ const elements = {
   deleteNode: document.querySelector('#deleteNodeButton'), finishDrawing: document.querySelector('#finishDrawingButton'),
   theme: document.querySelector('#themeToggle'), summary: document.querySelector('#algorithmSummary'), status: document.querySelector('#statusBadge'),
   current: document.querySelector('#currentMetric'), expanded: document.querySelector('#expandedMetric'), cost: document.querySelector('#costMetric'),
-  stepMetric: document.querySelector('#stepMetric'), frontier: document.querySelector('#frontierList'), visited: document.querySelector('#visitedList'), explanation: document.querySelector('#stepExplanation')
+  stepMetric: document.querySelector('#stepMetric'), frontier: document.querySelector('#frontierList'), visited: document.querySelector('#visitedList'), explanation: document.querySelector('#stepExplanation'),
+  searchTreePanel: document.querySelector('#searchTreePanel'), searchTreeSvg: document.querySelector('#searchTreeSvg'),
+  searchTreeMessage: document.querySelector('#searchTreeMessage'), searchExpansionOrder: document.querySelector('#searchExpansionOrder')
 };
 
 const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView') };
@@ -391,6 +419,143 @@ function renderGraph(step = null) {
   elements.svg.append(edgeLayer, labelLayer, nodeLayer);
 }
 
+
+function hideSearchTree() {
+  elements.searchTreePanel?.classList.add('hidden');
+  elements.searchTreeSvg?.replaceChildren();
+  elements.searchExpansionOrder?.replaceChildren();
+}
+
+function renderSearchTree(finalStep) {
+  if (!finalStep || !elements.searchTreePanel || !elements.searchTreeSvg) return;
+
+  const startNode = elements.start.value;
+  const parent = finalStep.parent ?? {};
+  const included = new Set([startNode, ...(finalStep.explored ?? []), ...(finalStep.frontier ?? [])]);
+  Object.entries(parent).forEach(([child, parentNode]) => {
+    included.add(child);
+    included.add(parentNode);
+  });
+
+  const children = new Map([...included].map((id) => [id, []]));
+  Object.entries(parent).forEach(([child, parentNode]) => {
+    if (included.has(child) && included.has(parentNode)) {
+      children.get(parentNode)?.push(child);
+    }
+  });
+  children.forEach((items) => items.sort((a, b) => a.localeCompare(b)));
+
+  const depth = new Map([[startNode, 0]]);
+  const queue = [startNode];
+  while (queue.length) {
+    const current = queue.shift();
+    for (const child of children.get(current) ?? []) {
+      if (!depth.has(child)) {
+        depth.set(child, depth.get(current) + 1);
+        queue.push(child);
+      }
+    }
+  }
+  for (const id of included) {
+    if (!depth.has(id)) depth.set(id, 0);
+  }
+
+  const levels = new Map();
+  for (const id of included) {
+    const level = depth.get(id) ?? 0;
+    if (!levels.has(level)) levels.set(level, []);
+    levels.get(level).push(id);
+  }
+  levels.forEach((items) => items.sort((a, b) => a.localeCompare(b)));
+
+  const levelNumbers = [...levels.keys()].sort((a, b) => a - b);
+  const maxLevelSize = Math.max(1, ...levelNumbers.map((level) => levels.get(level).length));
+  const horizontalGap = 125;
+  const verticalGap = 115;
+  const paddingX = 70;
+  const paddingY = 60;
+  const width = Math.max(900, maxLevelSize * horizontalGap + paddingX * 2);
+  const height = Math.max(280, levelNumbers.length * verticalGap + paddingY * 2);
+
+  elements.searchTreeSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  elements.searchTreeSvg.replaceChildren();
+
+  const positions = new Map();
+  for (const level of levelNumbers) {
+    const nodes = levels.get(level);
+    const usableWidth = width - paddingX * 2;
+    const spacing = usableWidth / (nodes.length + 1);
+    nodes.forEach((id, index) => {
+      positions.set(id, {
+        x: paddingX + spacing * (index + 1),
+        y: paddingY + level * verticalGap
+      });
+    });
+  }
+
+  const pathNodes = new Set(finalStep.path ?? []);
+  const pathEdges = new Set();
+  for (let index = 0; index < (finalStep.path?.length ?? 0) - 1; index += 1) {
+    pathEdges.add(`${finalStep.path[index]}::${finalStep.path[index + 1]}`);
+  }
+
+  const edgeLayer = createSvgElement('g', { class: 'search-tree-edges' });
+  Object.entries(parent).forEach(([child, parentNode]) => {
+    const from = positions.get(parentNode);
+    const to = positions.get(child);
+    if (!from || !to) return;
+    const isPath = pathEdges.has(`${parentNode}::${child}`);
+    edgeLayer.append(createSvgElement('path', {
+      d: `M ${from.x} ${from.y + 29} C ${from.x} ${(from.y + to.y) / 2}, ${to.x} ${(from.y + to.y) / 2}, ${to.x} ${to.y - 29}`,
+      class: `search-tree-edge${isPath ? ' solution-edge' : ''}`
+    }));
+  });
+  elements.searchTreeSvg.append(edgeLayer);
+
+  const expansionIndex = new Map();
+  (finalStep.explored ?? []).forEach((id, index) => {
+    if (!expansionIndex.has(id)) expansionIndex.set(id, index + 1);
+  });
+
+  const nodeLayer = createSvgElement('g', { class: 'search-tree-nodes' });
+  for (const id of included) {
+    const position = positions.get(id);
+    if (!position) continue;
+    const group = createSvgElement('g', { transform: `translate(${position.x}, ${position.y})` });
+    const classes = ['search-tree-node'];
+    if (id === startNode) classes.push('start-node');
+    if (selectedGoals.has(id)) classes.push('goal-node');
+    if (pathNodes.has(id)) classes.push('solution-node');
+    if (id === finalStep.current && finalStep.found) classes.push('reached-goal');
+
+    group.append(createSvgElement('circle', { cx: 0, cy: 0, r: 28, class: classes.join(' ') }));
+    const label = createSvgElement('text', { x: 0, y: 5, class: 'search-tree-node-label' });
+    label.textContent = id;
+    group.append(label);
+
+    if (expansionIndex.has(id)) {
+      const order = createSvgElement('text', { x: 0, y: 45, class: 'search-tree-order-label' });
+      order.textContent = `#${expansionIndex.get(id)}`;
+      group.append(order);
+    }
+    nodeLayer.append(group);
+  }
+  elements.searchTreeSvg.append(nodeLayer);
+
+  elements.searchTreePanel.classList.remove('hidden');
+  elements.searchTreeMessage.textContent = finalStep.found
+    ? `${elements.algorithm.options[elements.algorithm.selectedIndex].text} reached goal ${finalStep.current}. The highlighted branch is the returned solution path.`
+    : 'The search finished without reaching any selected goal. The tree shows all discovered states.';
+
+  elements.searchExpansionOrder.replaceChildren();
+  (finalStep.explored ?? []).forEach((id, index) => {
+    const token = document.createElement('span');
+    token.className = 'token search-order-token';
+    token.textContent = `${index + 1}. ${id}`;
+    elements.searchExpansionOrder.append(token);
+  });
+}
+
 function computeSteps() {
   adjacency = buildAdjacency(graph);
   const start = elements.start.value;
@@ -420,10 +585,25 @@ function renderStep(index) {
   elements.explanation.textContent = step.explanation; renderTokens(elements.frontier, step.frontier, step.costs); renderTokens(elements.visited, step.explored);
   if (step.found) {
     elements.cost.textContent = isUnweightedAlgorithm() ? Math.max(0, step.path.length - 1) : pathCost(step.path, adjacency);
-    setStatus(`Goal found: ${step.path.join(' → ')}`); stopTimer();
-  } else { elements.cost.textContent = '—'; setStatus(isRunning ? 'Running' : 'Paused'); }
+    setStatus(`Goal found: ${step.path.join(' → ')}`);
+    stopTimer();
+    renderSearchTree(step);
+  } else {
+    elements.cost.textContent = '—';
+    setStatus(isRunning ? 'Running' : 'Paused');
+  }
 }
-function nextStep() { ensureSteps(); if (currentStepIndex + 1 < steps.length) renderStep(currentStepIndex + 1); else { stopTimer(); setStatus(steps.at(-1)?.found ? 'Complete' : 'No selected goal is reachable'); } }
+function nextStep() {
+  ensureSteps();
+  if (currentStepIndex + 1 < steps.length) {
+    renderStep(currentStepIndex + 1);
+  } else {
+    stopTimer();
+    const finalStep = steps.at(-1);
+    setStatus(finalStep?.found ? 'Complete' : 'No selected goal is reachable');
+    if (finalStep) renderSearchTree(finalStep);
+  }
+}
 function getDelay() { return 1800 - Number(elements.speed.value); }
 function run() {
   if (drawingMode) finishDrawing();
@@ -433,6 +613,7 @@ function run() {
 function stopTimer() { if (timer !== null) window.clearInterval(timer); timer = null; isRunning = false; }
 function pause() { stopTimer(); setStatus(currentStepIndex >= 0 ? 'Paused' : 'Ready'); }
 function resetSearch() {
+  hideSearchTree();
   stopTimer(); steps = []; currentStepIndex = -1;
   elements.current.textContent = '—'; elements.expanded.textContent = '0'; elements.cost.textContent = '—'; elements.stepMetric.textContent = '0 / 0';
   elements.explanation.textContent = 'Choose an algorithm and press Run or Next step.'; renderTokens(elements.frontier, []); renderTokens(elements.visited, []); renderGraph(); setStatus('Ready');
