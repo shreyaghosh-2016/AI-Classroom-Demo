@@ -222,14 +222,93 @@
             <article class="definition-card"><strong>Path cost</strong><p>One unit for each tile movement.</p></article>
           </aside>
           <div class="demo-workspace">
-            <div class="puzzle-comparison">
-              <div><h3>Current state</h3><div id="puzzleBoard" class="puzzle-board" aria-label="Interactive 8-puzzle board"></div></div>
-              <div><h3>Goal state</h3><div id="puzzleGoal" class="puzzle-board goal-board"></div></div>
-            </div>
-            <p class="demo-hint">Click a tile adjacent to the blank to move it.</p>
+            <div class="puzzle-comparison puzzle-three-state">
+
+  <div class="puzzle-state-panel">
+    <h3>Initial state</h3>
+
+    <div
+      id="puzzleInitial"
+      class="puzzle-board reference-board"
+      aria-label="Initial 8-puzzle state">
+    </div>
+
+    <button
+      id="puzzleEditInitial"
+      class="puzzle-edit-button"
+      type="button">
+      Edit initial state
+    </button>
+  </div>
+
+  <div class="puzzle-state-panel current-puzzle-panel">
+    <h3>Current state</h3>
+
+    <div
+      id="puzzleBoard"
+      class="puzzle-board"
+      aria-label="Interactive current 8-puzzle state">
+    </div>
+  </div>
+
+  <div class="puzzle-state-panel">
+    <h3>Goal state</h3>
+
+    <div
+      id="puzzleGoal"
+      class="puzzle-board goal-board"
+      aria-label="Goal 8-puzzle state">
+    </div>
+  </div>
+
+</div>
+
+<div id="puzzleInitialEditor" class="puzzle-initial-editor hidden">
+
+  <div class="puzzle-editor-heading">
+    <div>
+      <h3>Configure initial state</h3>
+      <p>
+        Select each tile exactly once. Use <strong>Blank</strong> for the empty square.
+      </p>
+    </div>
+  </div>
+
+  <div
+    id="puzzleInitialInputs"
+    class="puzzle-input-grid"
+    aria-label="Initial-state configuration">
+  </div>
+
+  <div class="puzzle-editor-actions">
+    <button
+      id="puzzleApplyInitial"
+      class="primary-button"
+      type="button">
+      Apply initial state
+    </button>
+
+    <button
+      id="puzzleCancelInitial"
+      type="button">
+      Cancel
+    </button>
+  </div>
+
+  <p id="puzzleInitialError" class="puzzle-input-error" aria-live="polite"></p>
+
+</div>
+
+<p class="demo-hint">
+  Click a tile adjacent to the blank to move it. The initial state remains
+  visible while the current state changes.
+</p>
             <div class="demo-controls"><button id="puzzleSolve" class="primary-button" type="button">Auto solve</button><button id="puzzleNext" type="button">Next solution step</button><button id="puzzleShuffle" type="button">New puzzle</button><button id="puzzleReset" type="button">Reset</button></div>
             <div class="demo-feedback"><div><span>Blank position</span><strong id="puzzleBlank">—</strong></div><div><span>Moves</span><strong id="puzzleMoves">0</strong></div><div><span>Misplaced tiles</span><strong id="puzzleMisplaced">—</strong></div><p id="puzzleExplanation" aria-live="polite">Inspect the state and choose a legal move.</p></div>
-            <div><h3>Recent state transitions</h3><div id="puzzleHistory" class="state-history"></div></div>
+          <div>
+  <h3>Recent moves</h3>
+  <div id="puzzleHistory" class="state-history puzzle-move-history"></div>
+</div>  
           </div>
         </div>
       </section>

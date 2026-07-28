@@ -1381,8 +1381,16 @@ function renderStateGraph() {
 }
 
 function initEightPuzzleDemo() {
-  const board = document.querySelector('#puzzleBoard');
-  const goalBoard = document.querySelector('#puzzleGoal');
+  const initialBoard = document.querySelector('#puzzleInitial');
+const board = document.querySelector('#puzzleBoard');
+const goalBoard = document.querySelector('#puzzleGoal');
+
+const editInitialButton = document.querySelector('#puzzleEditInitial');
+const initialEditor = document.querySelector('#puzzleInitialEditor');
+const initialInputs = document.querySelector('#puzzleInitialInputs');
+const applyInitialButton = document.querySelector('#puzzleApplyInitial');
+const cancelInitialButton = document.querySelector('#puzzleCancelInitial');
+const initialError = document.querySelector('#puzzleInitialError');
   const blankOutput = document.querySelector('#puzzleBlank');
   const moveOutput = document.querySelector('#puzzleMoves');
   const misplacedOutput = document.querySelector('#puzzleMisplaced');
@@ -1393,8 +1401,26 @@ function initEightPuzzleDemo() {
   const newButton = document.querySelector('#puzzleShuffle');
   const resetButton = document.querySelector('#puzzleReset');
 
-  if (![board, goalBoard, blankOutput, moveOutput, misplacedOutput, explanation,
-    history, solveButton, nextButton, newButton, resetButton].every(Boolean)) return;
+  if (![
+  initialBoard,
+  board,
+  goalBoard,
+  editInitialButton,
+  initialEditor,
+  initialInputs,
+  applyInitialButton,
+  cancelInitialButton,
+  initialError,
+  blankOutput,
+  moveOutput,
+  misplacedOutput,
+  explanation,
+  history,
+  solveButton,
+  nextButton,
+  newButton,
+  resetButton
+].every(Boolean)) return;
 
   const goal = [1, 2, 3, 4, 5, 6, 7, 8, 0];
   const starts = [
@@ -1411,6 +1437,99 @@ function initEightPuzzleDemo() {
   let isRunning = false;
 
   const key = (s) => s.join(',');
+  function countInversions(values) {
+  const tiles = values.filter((value) => value !== 0);
+  let inversions = 0;
+
+  for (let i = 0; i < tiles.length; i += 1) {
+    for (let j = i + 1; j < tiles.length; j += 1) {
+      if (tiles[i] > tiles[j]) {
+        inversions += 1;
+      }
+    }
+  }
+
+  return inversions;
+}
+
+function isSolvable(values) {
+  /*
+   * For a 3 × 3 puzzle, the state is solvable when its inversion
+   * parity matches the goal-state inversion parity.
+   */
+  return countInversions(values) % 2 === countInversions(goal) % 2;
+}
+
+function createInitialStateEditor() {
+  initialInputs.replaceChildren();
+
+  initial.forEach((selectedValue, index) => {
+    const select = document.createElement('select');
+
+    select.className = 'puzzle-position-select';
+    select.dataset.position = String(index);
+    select.setAttribute(
+      'aria-label',
+      `Tile at row ${Math.floor(index / 3) + 1}, column ${index % 3 + 1}`
+    );
+
+    for (let value = 0; value <= 8; value += 1) {
+      const option = document.createElement('option');
+
+      option.value = String(value);
+      option.textContent = value === 0 ? 'Blank' : String(value);
+      option.selected = value === selectedValue;
+
+      select.append(option);
+    }
+
+    initialInputs.append(select);
+  });
+}
+
+function readInitialStateEditor() {
+  return [...initialInputs.querySelectorAll('select')].map(
+    (select) => Number(select.value)
+  );
+}
+
+function validateInitialState(values) {
+  if (values.length !== 9) {
+    return 'The initial state must contain exactly nine positions.';
+  }
+
+  const uniqueValues = new Set(values);
+
+  if (uniqueValues.size !== 9) {
+    return 'Each tile from 1 to 8 and the blank must appear exactly once.';
+  }
+
+  if (!values.every((value) => Number.isInteger(value) && value >= 0 && value <= 8)) {
+    return 'Only tiles 1–8 and one blank position are allowed.';
+  }
+
+  if (!isSolvable(values)) {
+    return 'This initial state cannot reach the selected goal state. Please use a solvable arrangement.';
+  }
+
+  return '';
+}
+
+function openInitialEditor() {
+  stopProblemDemos();
+  isRunning = false;
+
+  createInitialStateEditor();
+  initialError.textContent = '';
+  initialEditor.classList.remove('hidden');
+  editInitialButton.textContent = 'Editing initial state';
+}
+
+function closeInitialEditor() {
+  initialEditor.classList.add('hidden');
+  initialError.textContent = '';
+  editInitialButton.textContent = 'Edit initial state';
+}
 
   function neighbours(source) {
     const blank = source.indexOf(0);
@@ -1448,6 +1567,7 @@ function initEightPuzzleDemo() {
   }
 
   function render(message) {
+    draw(initialBoard, initial, false);
     draw(board, state, true);
     const blank = state.indexOf(0);
     blankOutput.textContent = `row ${Math.floor(blank / 3) + 1}, col ${blank % 3 + 1}`;
@@ -1458,13 +1578,27 @@ function initEightPuzzleDemo() {
     nextButton.disabled = isRunning || key(state) === key(goal);
   }
 
-  function addHistory(text) {
-    const chip = document.createElement('span');
-    chip.className = 'state-chip';
-    chip.textContent = text;
-    history.prepend(chip);
-    while (history.children.length > 8) history.lastElementChild.remove();
+  function formatDirection(direction) {
+  return direction.charAt(0).toUpperCase() + direction.slice(1);
+}
+
+function addHistory(tile, direction) {
+  const entry = document.createElement('div');
+  entry.className = 'puzzle-move-entry';
+
+  const tileLabel = document.createElement('strong');
+  tileLabel.textContent = `Tile ${tile}`;
+
+  const moveLabel = document.createElement('span');
+  moveLabel.textContent = `Blank moved ${formatDirection(direction)}`;
+
+  entry.append(tileLabel, moveLabel);
+  history.prepend(entry);
+
+  while (history.children.length > 8) {
+    history.lastElementChild.remove();
   }
+}
 
   function bfs() {
     if (key(state) === key(goal)) return [];
@@ -1500,7 +1634,7 @@ function initEightPuzzleDemo() {
   function applyStep(step) {
     state = [...step.state];
     moves += 1;
-    addHistory(`Tile ${step.tile}`);
+    addHistory(step.tile, step.direction);
     render(`Moved tile ${step.tile}; the blank moved ${step.direction}.`);
   }
 
@@ -1536,12 +1670,33 @@ function initEightPuzzleDemo() {
       return;
     }
     const tile = state[tileIndex];
-    [state[tileIndex], state[blankIndex]] = [state[blankIndex], state[tileIndex]];
-    moves += 1;
-    plan = [];
-    planIndex = 0;
-    addHistory(`Tile ${tile}`);
-    render(`Moved tile ${tile} into the blank square.`);
+
+let blankDirection = '';
+
+if (tileRow < blankRow) {
+  blankDirection = 'up';
+} else if (tileRow > blankRow) {
+  blankDirection = 'down';
+} else if (tileColumn < blankColumn) {
+  blankDirection = 'left';
+} else {
+  blankDirection = 'right';
+}
+
+[state[tileIndex], state[blankIndex]] = [
+  state[blankIndex],
+  state[tileIndex]
+];
+
+moves += 1;
+plan = [];
+planIndex = 0;
+
+addHistory(tile, blankDirection);
+
+render(
+  `Moved tile ${tile}; the blank moved ${blankDirection}.`
+);
   });
 
   nextButton.addEventListener('click', () => {
@@ -1577,17 +1732,63 @@ function initEightPuzzleDemo() {
     }
   });
 
+  editInitialButton.addEventListener('click', () => {
+  if (initialEditor.classList.contains('hidden')) {
+    openInitialEditor();
+  } else {
+    closeInitialEditor();
+  }
+});
+
+cancelInitialButton.addEventListener('click', () => {
+  closeInitialEditor();
+});
+
+applyInitialButton.addEventListener('click', () => {
+  const proposedInitial = readInitialStateEditor();
+  const validationError = validateInitialState(proposedInitial);
+
+  if (validationError) {
+    initialError.textContent = validationError;
+    return;
+  }
+
+  stopProblemDemos();
+  isRunning = false;
+
+  initial = [...proposedInitial];
+  state = [...initial];
+
+  moves = 0;
+  plan = [];
+  planIndex = 0;
+
+  history.replaceChildren();
+  closeInitialEditor();
+
+  render(
+    'The selected initial state has been applied. Click a legal tile or run BFS.'
+  );
+});
+
   newButton.addEventListener('click', () => {
-    stopProblemDemos();
-    isRunning = false;
-    initial = [...starts[Math.floor(Math.random() * starts.length)]];
-    state = [...initial];
-    moves = 0;
-    plan = [];
-    planIndex = 0;
-    history.replaceChildren();
-    render('A new solvable puzzle has been generated.');
-  });
+  stopProblemDemos();
+  isRunning = false;
+
+  initial = [
+    ...starts[Math.floor(Math.random() * starts.length)]
+  ];
+
+  state = [...initial];
+  moves = 0;
+  plan = [];
+  planIndex = 0;
+
+  history.replaceChildren();
+  closeInitialEditor();
+
+  render('A new solvable puzzle has been generated.');
+});
 
   resetButton.addEventListener('click', () => {
     stopProblemDemos();
@@ -1600,8 +1801,13 @@ function initEightPuzzleDemo() {
     render('Returned to the selected initial state.');
   });
 
-  draw(goalBoard, goal, false);
-  render('Click a tile adjacent to the blank, or let BFS solve it.');
+  draw(initialBoard, initial, false);
+draw(goalBoard, goal, false);
+createInitialStateEditor();
+
+render(
+  'Click a tile adjacent to the blank, edit the initial state, or let BFS solve it.'
+);
 }
 
 function initEightQueensDemo() {
