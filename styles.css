@@ -315,8 +315,79 @@ button.module-card:hover { transform: translateY(-4px); border-color: var(--acce
 .graph-key.start{background:#64748b}.graph-key.current{background:#2563eb}.graph-key.goal{background:#ef4444}.graph-key.route{background:#16a34a}
 .jug-graph-shell{overflow:auto;min-height:320px;border:1px solid var(--border);border-radius:14px;background:var(--panel)}
 #jugStateGraph{display:block;width:100%;min-width:720px;min-height:320px}
-.jug-graph-edge{stroke:var(--border);stroke-width:1.5}.jug-graph-edge.solution-edge{stroke:#16a34a;stroke-width:4}
-.jug-graph-node{fill:var(--panel);stroke:var(--muted);stroke-width:2}.jug-graph-node.start-node{fill:#64748b;stroke:#475569}.jug-graph-node.solution-node{stroke:#16a34a;stroke-width:4}.jug-graph-node.goal-node{fill:#ef4444;stroke:#b91c1c}.jug-graph-node.current-node{fill:#2563eb;stroke:#1d4ed8;stroke-width:5}
-.jug-graph-label{fill:var(--text);font-size:11px;font-weight:800;pointer-events:none}.jug-graph-node.start-node~.jug-graph-label,.jug-graph-node.goal-node~.jug-graph-label,.jug-graph-node.current-node~.jug-graph-label{fill:white}
+.jug-graph-edge {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 1.8;
+  opacity: 0.8;
+}
+
+.jug-graph-edge.solution-edge {
+  stroke: #16a34a;
+  stroke-width: 4;
+  opacity: 1;
+}
+
+.jug-arrow-head {
+  fill: #94a3b8;
+}
+
+.jug-solution-arrow-head {
+  fill: #16a34a;
+}
+
+.jug-graph-node {
+  fill: var(--panel);
+  stroke: #64748b;
+  stroke-width: 2;
+}
+
+.jug-graph-node.start-node {
+  fill: #fef9c3;
+  stroke: #475569;
+  stroke-width: 3;
+}
+
+.jug-graph-node.solution-node {
+  stroke: #16a34a;
+  stroke-width: 4;
+}
+
+.jug-graph-node.goal-node {
+  fill: #fee2e2;
+  stroke: #ef4444;
+  stroke-width: 4;
+}
+
+.jug-graph-node.current-node {
+  fill: #dbeafe;
+  stroke: #2563eb;
+  stroke-width: 5;
+}
+
+.jug-graph-label {
+  fill: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.jug-graph-depth-label {
+  fill: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.jug-graph-action-label {
+  fill: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: var(--panel);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  pointer-events: none;
+}.jug-graph-label{fill:var(--text);font-size:11px;font-weight:800;pointer-events:none}.jug-graph-node.start-node~.jug-graph-label,.jug-graph-node.goal-node~.jug-graph-label,.jug-graph-node.current-node~.jug-graph-label{fill:white}
 @media(max-width:1100px){.jug-config-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.jug-generate-button{grid-column:span 2}.jug-config-heading,.jug-graph-header{flex-direction:column}}
 @media(max-width:650px){.jug-config-grid{grid-template-columns:1fr}.jug-generate-button{grid-column:auto}.jug-target-fieldset{flex-wrap:wrap}.graph-toggle{width:100%}}

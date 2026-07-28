@@ -843,30 +843,73 @@ function initTwoJugDemo() {
   }
 
   function buildReachableGraph() {
-    const start = [0, 0];
-    const queue = [start];
-    const visited = new Map([[stateKey(start), start]]);
-    const edgeMap = new Map();
+  const start = [0, 0];
 
-    while (queue.length) {
-      const current = queue.shift();
-      for (const action of ACTIONS) {
-        const next = transition(current, action);
-        if (sameState(current, next)) continue;
-        const fromKey = stateKey(current);
-        const toKey = stateKey(next);
-        const undirectedKey = [fromKey, toKey].sort().join('|');
-        if (!edgeMap.has(undirectedKey)) {
-          edgeMap.set(undirectedKey, { from: [...current], to: [...next] });
-        }
-        if (!visited.has(toKey)) {
-          visited.set(toKey, [...next]);
-          queue.push(next);
-        }
+  const queue = [{
+    state: start,
+    depth: 0
+  }];
+
+  const visited = new Map([
+    [stateKey(start), {
+      state: start,
+      depth: 0
+    }]
+  ]);
+
+  const edges = [];
+  let goalState = null;
+
+  while (queue.length) {
+    const currentNode = queue.shift();
+    const current = currentNode.state;
+
+    if (isGoal(current)) {
+      goalState = current;
+      break;
+    }
+
+    for (const action of ACTIONS) {
+      const next = transition(current, action);
+      const nextKey = stateKey(next);
+
+      if (
+        sameState(current, next) ||
+        visited.has(nextKey)
+      ) {
+        continue;
+      }
+
+      const nextNode = {
+        state: [...next],
+        depth: currentNode.depth + 1
+      };
+
+      visited.set(nextKey, nextNode);
+
+      edges.push({
+        from: [...current],
+        to: [...next],
+        action,
+        depth: nextNode.depth
+      });
+
+      queue.push(nextNode);
+
+      if (isGoal(next)) {
+        goalState = next;
+        queue.length = 0;
+        break;
       }
     }
-    return { states: [...visited.values()], edges: [...edgeMap.values()] };
   }
+
+  return {
+    states: [...visited.values()],
+    edges,
+    goalState
+  };
+}
 
   function findShortestPlan(start) {
     const queue = [{ state: [...start], actions: [], states: [[...start]] }];
@@ -913,65 +956,253 @@ function initTwoJugDemo() {
     return node;
   }
 
-  function renderStateGraph() {
-    el.graphSvg.replaceChildren();
-    if (!el.graphToggle.checked) return;
+function renderStateGraph() {
+  el.graphSvg.replaceChildren();
 
-    const states = graphData.states;
-    if (!states.length) return;
+  if (!el.graphToggle.checked) return;
 
-    const width = 900;
-    const height = Math.max(430, Math.ceil(states.length / 8) * 86 + 80);
-    el.graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  const stateNodes = graphData.states;
 
-    const positions = new Map();
-    const columns = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(states.length * 1.6))));
-    const rows = Math.ceil(states.length / columns);
-    const xGap = width / (columns + 1);
-    const yGap = (height - 40) / (rows + 1);
+  if (!stateNodes.length) return;
 
-    states.forEach((s, index) => {
-      const row = Math.floor(index / columns);
-      const column = index % columns;
-      const stagger = row % 2 ? xGap * 0.25 : 0;
-      positions.set(stateKey(s), { x: xGap * (column + 1) + stagger, y: yGap * (row + 1) + 20 });
-    });
+  const levels = new Map();
 
-    const routePairs = new Set();
-    for (let i = 0; i < planStates.length - 1; i += 1) {
-      routePairs.add([stateKey(planStates[i]), stateKey(planStates[i + 1])].sort().join('|'));
+  stateNodes.forEach((node) => {
+    if (!levels.has(node.depth)) {
+      levels.set(node.depth, []);
     }
 
-    const edgeLayer = createSvg('g', { class: 'jug-graph-edges' });
-    graphData.edges.forEach((edge) => {
-      const from = positions.get(stateKey(edge.from));
-      const to = positions.get(stateKey(edge.to));
-      if (!from || !to) return;
-      const pairKey = [stateKey(edge.from), stateKey(edge.to)].sort().join('|');
-      edgeLayer.append(createSvg('line', {
-        x1: from.x, y1: from.y, x2: to.x, y2: to.y,
-        class: routePairs.has(pairKey) ? 'jug-graph-edge solution-edge' : 'jug-graph-edge'
-      }));
-    });
-    el.graphSvg.append(edgeLayer);
+    levels.get(node.depth).push(node);
+  });
 
-    const nodeLayer = createSvg('g', { class: 'jug-graph-nodes' });
-    states.forEach((s) => {
-      const pos = positions.get(stateKey(s));
-      const group = createSvg('g', { class: 'jug-graph-node-group', transform: `translate(${pos.x}, ${pos.y})` });
-      const classes = ['jug-graph-node'];
-      if (sameState(s, [0, 0])) classes.push('start-node');
-      if (isGoal(s)) classes.push('goal-node');
-      if (planStates.some((routeState) => sameState(routeState, s))) classes.push('solution-node');
-      if (sameState(s, state)) classes.push('current-node');
-      group.append(createSvg('circle', { r: 24, class: classes.join(' ') }));
-      const text = createSvg('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'jug-graph-label' });
-      text.textContent = formatState(s);
-      group.append(text);
-      nodeLayer.append(group);
+  const levelNumbers = [...levels.keys()].sort((a, b) => a - b);
+  const maximumNodesInLevel = Math.max(
+    ...levelNumbers.map((level) => levels.get(level).length)
+  );
+
+  const horizontalGap = 150;
+  const verticalGap = 125;
+  const horizontalPadding = 90;
+  const verticalPadding = 65;
+
+  const width = Math.max(
+    900,
+    maximumNodesInLevel * horizontalGap + horizontalPadding * 2
+  );
+
+  const height =
+    levelNumbers.length * verticalGap + verticalPadding * 2;
+
+  el.graphSvg.setAttribute(
+    'viewBox',
+    `0 0 ${width} ${height}`
+  );
+
+  const positions = new Map();
+
+  levelNumbers.forEach((level) => {
+    const nodes = levels.get(level);
+    const availableWidth = width - horizontalPadding * 2;
+    const spacing = availableWidth / (nodes.length + 1);
+
+    nodes.forEach((node, index) => {
+      positions.set(stateKey(node.state), {
+        x: horizontalPadding + spacing * (index + 1),
+        y: verticalPadding + level * verticalGap
+      });
     });
-    el.graphSvg.append(nodeLayer);
+  });
+
+  const routePairs = new Set();
+
+  for (let index = 0; index < planStates.length - 1; index += 1) {
+    routePairs.add(
+      `${stateKey(planStates[index])}|${stateKey(planStates[index + 1])}`
+    );
   }
+
+  const definitions = createSvg('defs');
+
+  const arrowMarker = createSvg('marker', {
+    id: 'jugArrow',
+    markerWidth: 10,
+    markerHeight: 10,
+    refX: 9,
+    refY: 3,
+    orient: 'auto',
+    markerUnits: 'strokeWidth'
+  });
+
+  arrowMarker.append(
+    createSvg('path', {
+      d: 'M0,0 L0,6 L9,3 z',
+      class: 'jug-arrow-head'
+    })
+  );
+
+  const solutionArrowMarker = createSvg('marker', {
+    id: 'jugSolutionArrow',
+    markerWidth: 10,
+    markerHeight: 10,
+    refX: 9,
+    refY: 3,
+    orient: 'auto',
+    markerUnits: 'strokeWidth'
+  });
+
+  solutionArrowMarker.append(
+    createSvg('path', {
+      d: 'M0,0 L0,6 L9,3 z',
+      class: 'jug-solution-arrow-head'
+    })
+  );
+
+  definitions.append(
+    arrowMarker,
+    solutionArrowMarker
+  );
+
+  el.graphSvg.append(definitions);
+
+  const edgeLayer = createSvg('g', {
+    class: 'jug-graph-edges'
+  });
+
+  graphData.edges.forEach((edge) => {
+    const from = positions.get(stateKey(edge.from));
+    const to = positions.get(stateKey(edge.to));
+
+    if (!from || !to) return;
+
+    const pairKey =
+      `${stateKey(edge.from)}|${stateKey(edge.to)}`;
+
+    const isSolutionEdge = routePairs.has(pairKey);
+
+    const nodeRadius = 31;
+
+    const startX = from.x;
+    const startY = from.y + nodeRadius;
+
+    const endX = to.x;
+    const endY = to.y - nodeRadius - 3;
+
+    const middleY = (startY + endY) / 2;
+
+    const pathData = [
+      `M ${startX} ${startY}`,
+      `C ${startX} ${middleY},`,
+      `${endX} ${middleY},`,
+      `${endX} ${endY}`
+    ].join(' ');
+
+    const edgePath = createSvg('path', {
+      d: pathData,
+      class: isSolutionEdge
+        ? 'jug-graph-edge solution-edge'
+        : 'jug-graph-edge',
+      'marker-end': isSolutionEdge
+        ? 'url(#jugSolutionArrow)'
+        : 'url(#jugArrow)'
+    });
+
+    edgeLayer.append(edgePath);
+
+    const labelX = (startX + endX) / 2;
+    const labelY = middleY - 7;
+
+    const actionLabel = createSvg('text', {
+      x: labelX,
+      y: labelY,
+      'text-anchor': 'middle',
+      class: 'jug-graph-action-label'
+    });
+
+    actionLabel.textContent =
+      ACTION_LABELS[edge.action];
+
+    edgeLayer.append(actionLabel);
+  });
+
+  el.graphSvg.append(edgeLayer);
+
+  const nodeLayer = createSvg('g', {
+    class: 'jug-graph-nodes'
+  });
+
+  stateNodes.forEach((node) => {
+    const currentState = node.state;
+    const position = positions.get(stateKey(currentState));
+
+    const group = createSvg('g', {
+      class: 'jug-graph-node-group',
+      transform: `translate(${position.x}, ${position.y})`
+    });
+
+    const classes = ['jug-graph-node'];
+
+    if (sameState(currentState, [0, 0])) {
+      classes.push('start-node');
+    }
+
+    if (isGoal(currentState)) {
+      classes.push('goal-node');
+    }
+
+    if (
+      planStates.some(
+        (routeState) =>
+          sameState(routeState, currentState)
+      )
+    ) {
+      classes.push('solution-node');
+    }
+
+    if (sameState(currentState, state)) {
+      classes.push('current-node');
+    }
+
+    group.append(
+      createSvg('rect', {
+        x: -43,
+        y: -26,
+        width: 86,
+        height: 52,
+        rx: 10,
+        ry: 10,
+        class: classes.join(' ')
+      })
+    );
+
+    const text = createSvg('text', {
+      x: 0,
+      y: 5,
+      'text-anchor': 'middle',
+      class: 'jug-graph-label'
+    });
+
+    text.textContent = formatState(currentState);
+
+    group.append(text);
+
+    const depthText = createSvg('text', {
+      x: 0,
+      y: 43,
+      'text-anchor': 'middle',
+      class: 'jug-graph-depth-label'
+    });
+
+    depthText.textContent =
+      node.depth === 0
+        ? 'Initial state'
+        : `Depth ${node.depth}`;
+
+    group.append(depthText);
+    nodeLayer.append(group);
+  });
+
+  el.graphSvg.append(nodeLayer);
+}
 
   function addHistory(actionLabel) {
     const wrapper = document.createElement('div');
