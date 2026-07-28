@@ -12,64 +12,45 @@ const defaultGraph = {
     { id: 'H', x: 790, y: 355, h: 0 }
   ],
   edges: [
-    { from: 'A', to: 'B', cost: 2 },
-    { from: 'A', to: 'C', cost: 4 },
-    { from: 'B', to: 'D', cost: 5 },
-    { from: 'B', to: 'E', cost: 3 },
-    { from: 'C', to: 'E', cost: 1 },
-    { from: 'C', to: 'F', cost: 6 },
-    { from: 'D', to: 'G', cost: 4 },
-    { from: 'E', to: 'G', cost: 2 },
-    { from: 'E', to: 'F', cost: 2 },
-    { from: 'F', to: 'H', cost: 3 },
+    { from: 'A', to: 'B', cost: 2 }, { from: 'A', to: 'C', cost: 4 },
+    { from: 'B', to: 'D', cost: 5 }, { from: 'B', to: 'E', cost: 3 },
+    { from: 'C', to: 'E', cost: 1 }, { from: 'C', to: 'F', cost: 6 },
+    { from: 'D', to: 'G', cost: 4 }, { from: 'E', to: 'G', cost: 2 },
+    { from: 'E', to: 'F', cost: 2 }, { from: 'F', to: 'H', cost: 3 },
     { from: 'G', to: 'H', cost: 2 }
   ]
 };
 
-function cloneGraph(graph) {
+function cloneGraph(source) {
   return {
-    nodes: graph.nodes.map(node => ({ ...node })),
-    edges: graph.edges.map(edge => ({ ...edge }))
+    nodes: source.nodes.map((node) => ({ ...node })),
+    edges: source.edges.map((edge) => ({ ...edge }))
   };
 }
 
-function buildAdjacency(graph) {
-  const adjacency = Object.fromEntries(graph.nodes.map(node => [node.id, []]));
-  for (const edge of graph.edges) {
-    adjacency[edge.from].push({ node: edge.to, cost: edge.cost });
-    adjacency[edge.to].push({ node: edge.from, cost: edge.cost });
+function buildAdjacency(source) {
+  const result = Object.fromEntries(source.nodes.map((node) => [node.id, []]));
+  for (const edge of source.edges) {
+    if (!result[edge.from] || !result[edge.to]) continue;
+    result[edge.from].push({ node: edge.to, cost: edge.cost });
+    result[edge.to].push({ node: edge.from, cost: edge.cost });
   }
-  for (const id of Object.keys(adjacency)) {
-    adjacency[id].sort((a, b) => a.node.localeCompare(b.node));
-  }
-  return adjacency;
+  Object.values(result).forEach((neighbors) => neighbors.sort((a, b) => a.node.localeCompare(b.node)));
+  return result;
 }
 
 function generateRandomGraph() {
   const ids = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  const positions = [
-    [100, 270], [270, 110], [270, 420], [465, 85],
-    [465, 265], [465, 445], [690, 160], [790, 360]
-  ];
+  const positions = [[100,270],[270,110],[270,420],[465,85],[465,265],[465,445],[690,160],[790,360]];
   const nodes = ids.map((id, index) => ({
     id,
     x: positions[index][0] + Math.round((Math.random() - 0.5) * 30),
     y: positions[index][1] + Math.round((Math.random() - 0.5) * 30),
     h: id === 'H' ? 0 : Math.max(1, 10 - index + Math.floor(Math.random() * 3))
   }));
-
-  const baseEdges = [
-    ['A', 'B'], ['A', 'C'], ['B', 'D'], ['B', 'E'], ['C', 'E'],
-    ['C', 'F'], ['D', 'G'], ['E', 'G'], ['E', 'F'], ['F', 'H'], ['G', 'H']
-  ];
-  const extraCandidates = [['B', 'C'], ['D', 'E'], ['F', 'G'], ['D', 'H']];
-  const selectedExtras = extraCandidates.filter(() => Math.random() > 0.55);
-  const edges = [...baseEdges, ...selectedExtras].map(([from, to]) => ({
-    from,
-    to,
-    cost: 1 + Math.floor(Math.random() * 8)
-  }));
-
+  const base = [['A','B'],['A','C'],['B','D'],['B','E'],['C','E'],['C','F'],['D','G'],['E','G'],['E','F'],['F','H'],['G','H']];
+  const extras = [['B','C'],['D','E'],['F','G'],['D','H']].filter(() => Math.random() > 0.55);
+  const edges = [...base, ...extras].map(([from, to]) => ({ from, to, cost: 1 + Math.floor(Math.random() * 8) }));
   return { nodes, edges };
 }
 
@@ -85,17 +66,20 @@ function reconstructPath(parent, goal) {
 
 function pathCost(path, adjacency) {
   let total = 0;
-  for (let i = 0; i < path.length - 1; i += 1) {
-    const edge = adjacency[path[i]].find(item => item.node === path[i + 1]);
-    total += edge?.cost ?? 0;
+  for (let index = 0; index < path.length - 1; index += 1) {
+    total += adjacency[path[index]]?.find((item) => item.node === path[index + 1])?.cost ?? 0;
   }
   return total;
+}
+
+function isGoalNode(node, goals) {
+  return goals.has(node);
 }
 
 function makeStep({ current, frontier, explored, parent, costs = {}, explanation, found = false, path = [] }) {
   return {
     current,
-    frontier: frontier.map(item => typeof item === 'string' ? item : item.node),
+    frontier: frontier.map((item) => typeof item === 'string' ? item : item.node),
     explored: [...explored],
     parent: { ...parent },
     costs: { ...costs },
@@ -105,290 +89,224 @@ function makeStep({ current, frontier, explored, parent, costs = {}, explanation
   };
 }
 
-
-function bfs(adjacency, start, goal) {
+function bfs(adjacency, start, goals) {
   const queue = [start];
   const discovered = new Set([start]);
   const explored = [];
   const parent = {};
   const steps = [];
-
   while (queue.length) {
     const before = [...queue];
     const current = queue.shift();
     explored.push(current);
-
-    if (current === goal) {
-      const path = reconstructPath(parent, goal);
-      steps.push(makeStep({
-        current, frontier: queue, explored, parent, found: true, path,
-        explanation: `${current} is the goal. BFS stops and reconstructs the shallowest solution path.`
-      }));
+    if (isGoalNode(current, goals)) {
+      const path = reconstructPath(parent, current);
+      steps.push(makeStep({ current, frontier: queue, explored, parent, found: true, path,
+        explanation: `${current} is one of the selected goals. BFS returns the shallowest goal reached.` }));
       return steps;
     }
-
     const added = [];
-    for (const neighbor of adjacency[current]) {
+    for (const neighbor of adjacency[current] ?? []) {
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node);
-        parent[neighbor.node] = current;
-        queue.push(neighbor.node);
-        added.push(neighbor.node);
+        discovered.add(neighbor.node); parent[neighbor.node] = current; queue.push(neighbor.node); added.push(neighbor.node);
       }
     }
-
-    steps.push(makeStep({
-      current, frontier: queue, explored, parent,
-      explanation: `${current} was removed from the FIFO queue [${before.join(', ')}]. ${added.length ? `New nodes ${added.join(', ')} were appended.` : 'No new nodes were added.'}`
-    }));
+    steps.push(makeStep({ current, frontier: queue, explored, parent,
+      explanation: `${current} was removed from FIFO queue [${before.join(', ')}]. ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}` }));
   }
-
   return steps;
 }
 
-
-function dfs(adjacency, start, goal) {
+function dfs(adjacency, start, goals) {
   const stack = [start];
   const discovered = new Set([start]);
   const explored = [];
   const parent = {};
   const steps = [];
-
   while (stack.length) {
     const before = [...stack];
     const current = stack.pop();
     explored.push(current);
-
-    if (current === goal) {
-      const path = reconstructPath(parent, goal);
-      steps.push(makeStep({
-        current, frontier: stack, explored, parent, found: true, path,
-        explanation: `${current} is the goal. DFS returns the path determined by its last-in, first-out expansion order.`
-      }));
+    if (isGoalNode(current, goals)) {
+      const path = reconstructPath(parent, current);
+      steps.push(makeStep({ current, frontier: stack, explored, parent, found: true, path,
+        explanation: `${current} is one of the selected goals. DFS returns the first goal found by LIFO expansion.` }));
       return steps;
     }
-
-    const neighbors = [...adjacency[current]].reverse();
     const added = [];
-    for (const neighbor of neighbors) {
+    for (const neighbor of [...(adjacency[current] ?? [])].reverse()) {
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node);
-        parent[neighbor.node] = current;
-        stack.push(neighbor.node);
-        added.push(neighbor.node);
+        discovered.add(neighbor.node); parent[neighbor.node] = current; stack.push(neighbor.node); added.push(neighbor.node);
       }
     }
-
-    steps.push(makeStep({
-      current, frontier: stack, explored, parent,
-      explanation: `${current} was popped from the LIFO stack [${before.join(', ')}]. ${added.length ? `Nodes ${added.join(', ')} were pushed.` : 'No new nodes were pushed.'}`
-    }));
+    steps.push(makeStep({ current, frontier: stack, explored, parent,
+      explanation: `${current} was popped from LIFO stack [${before.join(', ')}]. ${added.length ? `Pushed ${added.join(', ')}.` : 'No new nodes were pushed.'}` }));
   }
-
   return steps;
 }
 
+function ids(adjacency, start, goals) {
+  const allSteps = [];
+  const maxDepth = Math.max(0, Object.keys(adjacency).length - 1);
+  for (let limit = 0; limit <= maxDepth; limit += 1) {
+    const stack = [{ node: start, depth: 0, path: [start] }];
+    const exploredThisIteration = [];
+    while (stack.length) {
+      const item = stack.pop();
+      const current = item.node;
+      exploredThisIteration.push(current);
+      if (isGoalNode(current, goals)) {
+        allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent: {}, found: true, path: item.path,
+          explanation: `${current} is a selected goal. IDS found it with depth limit ${limit}.` }));
+        return allSteps;
+      }
+      const children = [];
+      if (item.depth < limit) {
+        for (const neighbor of [...(adjacency[current] ?? [])].reverse()) {
+          if (!item.path.includes(neighbor.node)) {
+            stack.push({ node: neighbor.node, depth: item.depth + 1, path: [...item.path, neighbor.node] });
+            children.push(neighbor.node);
+          }
+        }
+      }
+      allSteps.push(makeStep({ current, frontier: stack, explored: exploredThisIteration, parent: {},
+        explanation: `IDS depth limit ${limit}: expanded ${current} at depth ${item.depth}. ${item.depth === limit ? 'Depth limit reached.' : children.length ? `Added ${children.join(', ')}.` : 'No child was added.'}` }));
+    }
+  }
+  return allSteps;
+}
 
-function ucs(adjacency, start, goal) {
+function ucs(adjacency, start, goals) {
   const frontier = [{ node: start, priority: 0 }];
   const costs = { [start]: 0 };
   const parent = {};
   const explored = [];
   const closed = new Set();
   const steps = [];
-
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
     const currentItem = frontier.shift();
     const current = currentItem.node;
     if (closed.has(current)) continue;
-    closed.add(current);
-    explored.push(current);
-
-    if (current === goal) {
-      const path = reconstructPath(parent, goal);
-      steps.push(makeStep({
-        current, frontier, explored, parent, costs, found: true, path,
-        explanation: `${current} has the lowest cumulative cost g(n)=${costs[current]} and is the goal. UCS has found an optimal path.`
-      }));
+    closed.add(current); explored.push(current);
+    if (isGoalNode(current, goals)) {
+      const path = reconstructPath(parent, current);
+      steps.push(makeStep({ current, frontier, explored, parent, costs, found: true, path,
+        explanation: `${current} is a selected goal with the lowest cumulative cost g(n)=${costs[current]}.` }));
       return steps;
     }
-
     const relaxed = [];
-    for (const neighbor of adjacency[current]) {
+    for (const neighbor of adjacency[current] ?? []) {
       const newCost = costs[current] + neighbor.cost;
       if (newCost < (costs[neighbor.node] ?? Infinity)) {
-        costs[neighbor.node] = newCost;
-        parent[neighbor.node] = current;
-        frontier.push({ node: neighbor.node, priority: newCost });
-        relaxed.push(`${neighbor.node}: ${newCost}`);
+        costs[neighbor.node] = newCost; parent[neighbor.node] = current;
+        frontier.push({ node: neighbor.node, priority: newCost }); relaxed.push(`${neighbor.node}: ${newCost}`);
       }
     }
-
-    steps.push(makeStep({
-      current, frontier, explored, parent, costs,
-      explanation: `UCS expanded ${current} with g(n)=${costs[current]}. ${relaxed.length ? `Updated costs: ${relaxed.join('; ')}.` : 'No cheaper path was discovered.'}`
-    }));
+    steps.push(makeStep({ current, frontier, explored, parent, costs,
+      explanation: `UCS expanded ${current} with g(n)=${costs[current]}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No cheaper path was found.'}` }));
   }
-
   return steps;
 }
 
-
-function greedy(adjacency, heuristics, start, goal) {
+function greedy(adjacency, heuristics, start, goals) {
   const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
   const discovered = new Set([start]);
   const parent = {};
   const explored = [];
   const steps = [];
-
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
-    const currentItem = frontier.shift();
-    const current = currentItem.node;
+    const current = frontier.shift().node;
     explored.push(current);
-
-    if (current === goal) {
-      const path = reconstructPath(parent, goal);
-      steps.push(makeStep({
-        current, frontier, explored, parent, found: true, path,
-        explanation: `${current} is the goal. Greedy search selected nodes solely using h(n), so the path need not be cheapest.`
-      }));
+    if (isGoalNode(current, goals)) {
+      const path = reconstructPath(parent, current);
+      steps.push(makeStep({ current, frontier, explored, parent, found: true, path,
+        explanation: `${current} is a selected goal. Greedy search stops at the first selected goal reached.` }));
       return steps;
     }
-
     const added = [];
-    for (const neighbor of adjacency[current]) {
+    for (const neighbor of adjacency[current] ?? []) {
       if (!discovered.has(neighbor.node)) {
-        discovered.add(neighbor.node);
-        parent[neighbor.node] = current;
+        discovered.add(neighbor.node); parent[neighbor.node] = current;
         frontier.push({ node: neighbor.node, priority: heuristics[neighbor.node] ?? 0 });
         added.push(`${neighbor.node} (h=${heuristics[neighbor.node] ?? 0})`);
       }
     }
-
-    steps.push(makeStep({
-      current, frontier, explored, parent,
-      explanation: `Greedy search expanded ${current}, currently the node with smallest h(n). ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}`
-    }));
+    steps.push(makeStep({ current, frontier, explored, parent,
+      explanation: `Greedy expanded ${current}. ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}` }));
   }
-
   return steps;
 }
 
-
-function astar(adjacency, heuristics, start, goal) {
+function astar(adjacency, heuristics, start, goals) {
   const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
   const g = { [start]: 0 };
   const parent = {};
   const explored = [];
   const closed = new Set();
   const steps = [];
-
   while (frontier.length) {
     frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
-    const currentItem = frontier.shift();
-    const current = currentItem.node;
+    const current = frontier.shift().node;
     if (closed.has(current)) continue;
-    closed.add(current);
-    explored.push(current);
-
-    if (current === goal) {
-      const path = reconstructPath(parent, goal);
-      steps.push(makeStep({
-        current, frontier, explored, parent, costs: g, found: true, path,
-        explanation: `${current} is the goal with g(n)=${g[current]}. A* stops after selecting the lowest f(n)=g(n)+h(n).`
-      }));
+    closed.add(current); explored.push(current);
+    if (isGoalNode(current, goals)) {
+      const path = reconstructPath(parent, current);
+      steps.push(makeStep({ current, frontier, explored, parent, costs: g, found: true, path,
+        explanation: `${current} is a selected goal with g(n)=${g[current]}.` }));
       return steps;
     }
-
     const relaxed = [];
-    for (const neighbor of adjacency[current]) {
+    for (const neighbor of adjacency[current] ?? []) {
       const tentative = g[current] + neighbor.cost;
       if (tentative < (g[neighbor.node] ?? Infinity)) {
-        g[neighbor.node] = tentative;
-        parent[neighbor.node] = current;
-        closed.delete(neighbor.node);
+        g[neighbor.node] = tentative; parent[neighbor.node] = current; closed.delete(neighbor.node);
         const f = tentative + (heuristics[neighbor.node] ?? 0);
-        frontier.push({ node: neighbor.node, priority: f });
-        relaxed.push(`${neighbor.node}: g=${tentative}, f=${f}`);
+        frontier.push({ node: neighbor.node, priority: f }); relaxed.push(`${neighbor.node}: g=${tentative}, f=${f}`);
       }
     }
-
-    steps.push(makeStep({
-      current, frontier, explored, parent, costs: g,
-      explanation: `A* expanded ${current} with g=${g[current]} and h=${heuristics[current] ?? 0}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No better route was found.'}`
-    }));
+    steps.push(makeStep({ current, frontier, explored, parent, costs: g,
+      explanation: `A* expanded ${current}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No better route was found.'}` }));
   }
-
   return steps;
 }
 
-
 const SVG_NS = 'http://www.w3.org/2000/svg';
-
 const elements = {
-  svg: document.querySelector('#graphSvg'),
-  algorithm: document.querySelector('#algorithmSelect'),
-  start: document.querySelector('#startSelect'),
-  goal: document.querySelector('#goalSelect'),
-  speed: document.querySelector('#speedRange'),
-  run: document.querySelector('#runButton'),
-  step: document.querySelector('#stepButton'),
-  pause: document.querySelector('#pauseButton'),
-  reset: document.querySelector('#resetButton'),
-  defaultGraph: document.querySelector('#defaultGraphButton'),
-  randomGraph: document.querySelector('#randomGraphButton'),
-  theme: document.querySelector('#themeToggle'),
-  summary: document.querySelector('#algorithmSummary'),
-  status: document.querySelector('#statusBadge'),
-  current: document.querySelector('#currentMetric'),
-  expanded: document.querySelector('#expandedMetric'),
-  cost: document.querySelector('#costMetric'),
-  stepMetric: document.querySelector('#stepMetric'),
-  frontier: document.querySelector('#frontierList'),
-  visited: document.querySelector('#visitedList'),
-  explanation: document.querySelector('#stepExplanation')
+  svg: document.querySelector('#graphSvg'), algorithm: document.querySelector('#algorithmSelect'),
+  start: document.querySelector('#startSelect'), goal: document.querySelector('#goalSelect'), speed: document.querySelector('#speedRange'),
+  run: document.querySelector('#runButton'), step: document.querySelector('#stepButton'), pause: document.querySelector('#pauseButton'), reset: document.querySelector('#resetButton'),
+  defaultGraph: document.querySelector('#defaultGraphButton'), randomGraph: document.querySelector('#randomGraphButton'), drawGraph: document.querySelector('#drawGraphButton'),
+  clearGraph: document.querySelector('#clearGraphButton'), graphEditor: document.querySelector('#graphEditorControls'), edgeCost: document.querySelector('#edgeCostInput'),
+  deleteNode: document.querySelector('#deleteNodeButton'), finishDrawing: document.querySelector('#finishDrawingButton'),
+  theme: document.querySelector('#themeToggle'), summary: document.querySelector('#algorithmSummary'), status: document.querySelector('#statusBadge'),
+  current: document.querySelector('#currentMetric'), expanded: document.querySelector('#expandedMetric'), cost: document.querySelector('#costMetric'),
+  stepMetric: document.querySelector('#stepMetric'), frontier: document.querySelector('#frontierList'), visited: document.querySelector('#visitedList'), explanation: document.querySelector('#stepExplanation')
 };
 
-
-const views = {
-  homeView: document.querySelector('#homeView'),
-  problemView: document.querySelector('#problemView'),
-  searchView: document.querySelector('#searchView')
-};
+const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView') };
 const homeButton = document.querySelector('#homeButton');
 const brandButton = document.querySelector('#brandButton');
 
 function showView(viewId) {
-  stopTimer();
-  stopProblemDemos();
-  Object.entries(views).forEach(([id, view]) => {
-    view.classList.toggle('hidden', id !== viewId);
-    view.classList.toggle('view-active', id === viewId);
-  });
+  stopTimer(); stopProblemDemos();
+  Object.entries(views).forEach(([id, view]) => { view.classList.toggle('hidden', id !== viewId); view.classList.toggle('view-active', id === viewId); });
   homeButton.classList.toggle('hidden', viewId === 'homeView');
-  document.title = viewId === 'homeView'
-    ? 'AI Course (IIT BBSR)'
-    : viewId === 'problemView'
-      ? 'Automated Problem Solving | AI Course (IIT BBSR)'
-      : 'Search Techniques | AI Course (IIT BBSR)';
+  document.title = viewId === 'homeView' ? 'AI Course (IIT BBSR)' : viewId === 'problemView' ? 'Automated Problem Solving | AI Course (IIT BBSR)' : 'Search Techniques | AI Course (IIT BBSR)';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (viewId === 'searchView') renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
 }
 
-document.querySelectorAll('[data-view]').forEach(card => {
-  card.addEventListener('click', () => showView(card.dataset.view));
-});
-document.querySelectorAll('.open-search-button').forEach(button => {
-  button.addEventListener('click', () => showView('searchView'));
-});
+document.querySelectorAll('[data-view]').forEach((card) => card.addEventListener('click', () => showView(card.dataset.view)));
+document.querySelectorAll('.open-search-button').forEach((button) => button.addEventListener('click', () => showView('searchView')));
 homeButton.addEventListener('click', () => showView('homeView'));
 brandButton.addEventListener('click', () => showView('homeView'));
 
 const summaries = {
-  bfs: 'BFS expands the shallowest unexpanded node first using a FIFO queue.',
-  dfs: 'DFS expands the deepest available node first using a LIFO stack.',
+  bfs: 'BFS expands the shallowest unexpanded node first using a FIFO queue. Edge weights are ignored.',
+  dfs: 'DFS expands the deepest available node first using a LIFO stack. Edge weights are ignored.',
+  ids: 'IDS repeatedly performs depth-limited DFS with increasing depth limits. Edge weights are ignored.',
   ucs: 'UCS expands the node with the smallest cumulative path cost g(n).',
   greedy: 'Greedy search expands the node with the smallest heuristic h(n).',
   astar: 'A* expands the node with the smallest f(n) = g(n) + h(n).'
@@ -401,276 +319,184 @@ let currentStepIndex = -1;
 let timer = null;
 let isRunning = false;
 let draggingNodeId = null;
+let pointerMoved = false;
+let drawingMode = false;
+let selectedEditorNodeId = null;
+let selectedGoals = new Set(['H']);
 
 function createSvgElement(tag, attributes = {}) {
   const element = document.createElementNS(SVG_NS, tag);
-  for (const [key, value] of Object.entries(attributes)) {
-    element.setAttribute(key, value);
-  }
+  Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
   return element;
 }
-
-function getNode(id) {
-  return graph.nodes.find(node => node.id === id);
-}
-
-function edgeKey(a, b) {
-  return [a, b].sort().join('::');
-}
+function getNode(id) { return graph.nodes.find((node) => node.id === id); }
+function edgeKey(a, b) { return [a, b].sort().join('::'); }
+function isUnweightedAlgorithm() { return ['bfs', 'dfs', 'ids'].includes(elements.algorithm.value); }
+function setStatus(text) { elements.status.textContent = text; }
 
 function populateNodeSelectors() {
   const previousStart = elements.start.value || graph.nodes[0]?.id;
-  const previousGoal = elements.goal.value || graph.nodes.at(-1)?.id;
+  const ids = new Set(graph.nodes.map((node) => node.id));
   elements.start.replaceChildren();
+  graph.nodes.forEach((node) => {
+    const option = document.createElement('option'); option.value = node.id; option.textContent = node.id; elements.start.append(option);
+  });
+  if (graph.nodes.length) elements.start.value = ids.has(previousStart) ? previousStart : graph.nodes[0].id;
+  selectedGoals = new Set([...selectedGoals].filter((id) => ids.has(id)));
+  if (!selectedGoals.size && graph.nodes.length) selectedGoals.add(graph.nodes.at(-1).id);
   elements.goal.replaceChildren();
-
-  for (const node of graph.nodes) {
-    for (const select of [elements.start, elements.goal]) {
-      const option = document.createElement('option');
-      option.value = node.id;
-      option.textContent = node.id;
-      select.append(option);
-    }
-  }
-
-  elements.start.value = graph.nodes.some(node => node.id === previousStart) ? previousStart : graph.nodes[0].id;
-  elements.goal.value = graph.nodes.some(node => node.id === previousGoal) ? previousGoal : graph.nodes.at(-1).id;
-  if (elements.start.value === elements.goal.value && graph.nodes.length > 1) {
-    elements.goal.value = graph.nodes.at(-1).id;
-  }
+  graph.nodes.forEach((node) => {
+    const label = document.createElement('label'); label.className = 'goal-checkbox-item';
+    const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.value = node.id; checkbox.checked = selectedGoals.has(node.id);
+    checkbox.addEventListener('change', () => {
+      checkbox.checked ? selectedGoals.add(node.id) : selectedGoals.delete(node.id);
+      if (!selectedGoals.size) { checkbox.checked = true; selectedGoals.add(node.id); setStatus('At least one goal is required'); return; }
+      handleConfigurationChange();
+    });
+    const text = document.createElement('span'); text.textContent = node.id;
+    label.append(checkbox, text); elements.goal.append(label);
+  });
 }
 
 function renderGraph(step = null) {
   elements.svg.replaceChildren();
   const pathEdges = new Set();
-  if (step?.path?.length) {
-    for (let i = 0; i < step.path.length - 1; i += 1) {
-      pathEdges.add(edgeKey(step.path[i], step.path[i + 1]));
-    }
-  }
-
+  if (step?.path?.length) for (let i = 0; i < step.path.length - 1; i += 1) pathEdges.add(edgeKey(step.path[i], step.path[i + 1]));
   const edgeLayer = createSvgElement('g');
   const labelLayer = createSvgElement('g');
   const nodeLayer = createSvgElement('g');
-
   for (const edge of graph.edges) {
-    const source = getNode(edge.from);
-    const target = getNode(edge.to);
-    const line = createSvgElement('line', {
-      x1: source.x, y1: source.y, x2: target.x, y2: target.y,
-      class: `edge${pathEdges.has(edgeKey(edge.from, edge.to)) ? ' path-edge' : ''}`
-    });
-    edgeLayer.append(line);
-
-    const midX = (source.x + target.x) / 2;
-    const midY = (source.y + target.y) / 2;
-    const labelGroup = createSvgElement('g');
-    labelGroup.append(createSvgElement('rect', {
-      x: midX - 18, y: midY - 14, width: 36, height: 28, rx: 10, class: 'edge-label-bg'
-    }));
-    const text = createSvgElement('text', { x: midX, y: midY + 1, class: 'edge-label' });
-    text.textContent = edge.cost;
-    labelGroup.append(text);
-    labelLayer.append(labelGroup);
+    const source = getNode(edge.from); const target = getNode(edge.to); if (!source || !target) continue;
+    edgeLayer.append(createSvgElement('line', { x1: source.x, y1: source.y, x2: target.x, y2: target.y, class: `edge${pathEdges.has(edgeKey(edge.from, edge.to)) ? ' path-edge' : ''}` }));
+    if (!isUnweightedAlgorithm()) {
+      const midX = (source.x + target.x) / 2; const midY = (source.y + target.y) / 2;
+      const group = createSvgElement('g');
+      group.append(createSvgElement('rect', { x: midX - 18, y: midY - 14, width: 36, height: 28, rx: 10, class: 'edge-label-bg' }));
+      const text = createSvgElement('text', { x: midX, y: midY + 1, class: 'edge-label' }); text.textContent = edge.cost; group.append(text); labelLayer.append(group);
+    }
   }
-
-  const frontierSet = new Set(step?.frontier ?? []);
-  const exploredSet = new Set(step?.explored ?? []);
-  const pathSet = new Set(step?.path ?? []);
-
+  const frontierSet = new Set(step?.frontier ?? []); const exploredSet = new Set(step?.explored ?? []); const pathSet = new Set(step?.path ?? []);
   for (const node of graph.nodes) {
     const group = createSvgElement('g', { 'data-node-id': node.id });
     let stateClass = '';
-    if (pathSet.has(node.id)) stateClass = 'path';
-    else if (step?.current === node.id) stateClass = 'current';
-    else if (frontierSet.has(node.id)) stateClass = 'frontier';
-    else if (exploredSet.has(node.id)) stateClass = 'visited';
-
-    const circle = createSvgElement('circle', {
-      cx: node.x, cy: node.y, r: 31,
-      class: `node-circle ${stateClass}${elements.goal.value === node.id ? ' goal-node' : ''}`,
-      'data-node-id': node.id
-    });
-    group.append(circle);
-
-    const text = createSvgElement('text', { x: node.x, y: node.y + 1, class: 'node-label' });
-    text.textContent = node.id;
-    group.append(text);
-
+    if (pathSet.has(node.id)) stateClass = 'path'; else if (step?.current === node.id) stateClass = 'current'; else if (frontierSet.has(node.id)) stateClass = 'frontier'; else if (exploredSet.has(node.id)) stateClass = 'visited';
+    const extra = `${selectedGoals.has(node.id) ? ' goal-node' : ''}${drawingMode && selectedEditorNodeId === node.id ? ' editor-selected' : ''}`;
+    group.append(createSvgElement('circle', { cx: node.x, cy: node.y, r: 31, class: `node-circle ${stateClass}${extra}`, 'data-node-id': node.id }));
+    const text = createSvgElement('text', { x: node.x, y: node.y + 1, class: 'node-label', 'data-node-id': node.id }); text.textContent = node.id; group.append(text);
     if (['greedy', 'astar'].includes(elements.algorithm.value)) {
-      const heuristic = createSvgElement('text', { x: node.x, y: node.y + 51, class: 'node-heuristic' });
-      heuristic.textContent = `h=${node.h}`;
-      group.append(heuristic);
+      const heuristic = createSvgElement('text', { x: node.x, y: node.y + 51, class: 'node-heuristic' }); heuristic.textContent = `h=${node.h}`; group.append(heuristic);
     }
-
     nodeLayer.append(group);
   }
-
   elements.svg.append(edgeLayer, labelLayer, nodeLayer);
 }
 
 function computeSteps() {
   adjacency = buildAdjacency(graph);
   const start = elements.start.value;
-  const goal = elements.goal.value;
-  const heuristics = Object.fromEntries(graph.nodes.map(node => [node.id, node.h]));
-
+  const goals = new Set(selectedGoals);
+  if (!start || !goals.size) return [];
+  const heuristics = Object.fromEntries(graph.nodes.map((node) => [node.id, node.h]));
   switch (elements.algorithm.value) {
-    case 'dfs': return dfs(adjacency, start, goal);
-    case 'ucs': return ucs(adjacency, start, goal);
-    case 'greedy': return greedy(adjacency, heuristics, start, goal);
-    case 'astar': return astar(adjacency, heuristics, start, goal);
-    case 'bfs':
-    default: return bfs(adjacency, start, goal);
+    case 'dfs': return dfs(adjacency, start, goals);
+    case 'ids': return ids(adjacency, start, goals);
+    case 'ucs': return ucs(adjacency, start, goals);
+    case 'greedy': return greedy(adjacency, heuristics, start, goals);
+    case 'astar': return astar(adjacency, heuristics, start, goals);
+    default: return bfs(adjacency, start, goals);
   }
 }
 
-function ensureSteps() {
-  if (!steps.length) {
-    steps = computeSteps();
-    currentStepIndex = -1;
-    elements.stepMetric.textContent = `0 / ${steps.length}`;
-  }
-}
-
+function ensureSteps() { if (!steps.length) { steps = computeSteps(); currentStepIndex = -1; elements.stepMetric.textContent = `0 / ${steps.length}`; } }
 function renderTokens(container, values, costs = null) {
   container.replaceChildren();
-  if (!values.length) {
-    const empty = document.createElement('span');
-    empty.className = 'empty-token';
-    empty.textContent = 'Empty';
-    container.append(empty);
-    return;
-  }
-  for (const value of values) {
-    const token = document.createElement('span');
-    token.className = 'token';
-    token.textContent = costs && costs[value] !== undefined ? `${value} (${costs[value]})` : value;
-    container.append(token);
-  }
+  if (!values.length) { const empty = document.createElement('span'); empty.className = 'empty-token'; empty.textContent = 'Empty'; container.append(empty); return; }
+  values.forEach((value) => { const token = document.createElement('span'); token.className = 'token'; token.textContent = costs && costs[value] !== undefined ? `${value} (${costs[value]})` : value; container.append(token); });
 }
-
 function renderStep(index) {
   if (index < 0 || index >= steps.length) return;
-  currentStepIndex = index;
-  const step = steps[index];
-  renderGraph(step);
-  elements.current.textContent = step.current ?? '—';
-  elements.expanded.textContent = step.explored.length;
-  elements.stepMetric.textContent = `${index + 1} / ${steps.length}`;
-  elements.explanation.textContent = step.explanation;
-  renderTokens(elements.frontier, step.frontier, step.costs);
-  renderTokens(elements.visited, step.explored);
-
+  currentStepIndex = index; const step = steps[index]; renderGraph(step);
+  elements.current.textContent = step.current ?? '—'; elements.expanded.textContent = step.explored.length; elements.stepMetric.textContent = `${index + 1} / ${steps.length}`;
+  elements.explanation.textContent = step.explanation; renderTokens(elements.frontier, step.frontier, step.costs); renderTokens(elements.visited, step.explored);
   if (step.found) {
-    elements.cost.textContent = pathCost(step.path, adjacency);
-    setStatus(`Goal found: ${step.path.join(' → ')}`);
-    stopTimer();
-  } else {
-    elements.cost.textContent = '—';
-    setStatus(isRunning ? 'Running' : 'Paused');
-  }
+    elements.cost.textContent = isUnweightedAlgorithm() ? Math.max(0, step.path.length - 1) : pathCost(step.path, adjacency);
+    setStatus(`Goal found: ${step.path.join(' → ')}`); stopTimer();
+  } else { elements.cost.textContent = '—'; setStatus(isRunning ? 'Running' : 'Paused'); }
 }
-
-function nextStep() {
-  ensureSteps();
-  if (currentStepIndex + 1 < steps.length) {
-    renderStep(currentStepIndex + 1);
-  } else {
-    stopTimer();
-    setStatus(steps.at(-1)?.found ? 'Complete' : 'No path found');
-  }
-}
-
-function getDelay() {
-  const value = Number(elements.speed.value);
-  return 1800 - value;
-}
-
+function nextStep() { ensureSteps(); if (currentStepIndex + 1 < steps.length) renderStep(currentStepIndex + 1); else { stopTimer(); setStatus(steps.at(-1)?.found ? 'Complete' : 'No selected goal is reachable'); } }
+function getDelay() { return 1800 - Number(elements.speed.value); }
 function run() {
-  ensureSteps();
-  if (isRunning) return;
-  isRunning = true;
-  setStatus('Running');
-  nextStep();
-  if (!isRunning) return;
-  timer = window.setInterval(nextStep, getDelay());
+  if (drawingMode) finishDrawing();
+  ensureSteps(); if (!steps.length) { setStatus('Draw or load a graph first'); return; }
+  if (isRunning) return; isRunning = true; setStatus('Running'); nextStep(); if (isRunning) timer = window.setInterval(nextStep, getDelay());
 }
-
-function stopTimer() {
-  if (timer !== null) window.clearInterval(timer);
-  timer = null;
-  isRunning = false;
-}
-
-function pause() {
-  stopTimer();
-  setStatus(currentStepIndex >= 0 ? 'Paused' : 'Ready');
-}
-
+function stopTimer() { if (timer !== null) window.clearInterval(timer); timer = null; isRunning = false; }
+function pause() { stopTimer(); setStatus(currentStepIndex >= 0 ? 'Paused' : 'Ready'); }
 function resetSearch() {
-  stopTimer();
-  steps = [];
-  currentStepIndex = -1;
-  elements.current.textContent = '—';
-  elements.expanded.textContent = '0';
-  elements.cost.textContent = '—';
-  elements.stepMetric.textContent = '0 / 0';
-  elements.explanation.textContent = 'Choose an algorithm and press Run or Next step.';
-  renderTokens(elements.frontier, []);
-  renderTokens(elements.visited, []);
-  renderGraph();
-  setStatus('Ready');
+  stopTimer(); steps = []; currentStepIndex = -1;
+  elements.current.textContent = '—'; elements.expanded.textContent = '0'; elements.cost.textContent = '—'; elements.stepMetric.textContent = '0 / 0';
+  elements.explanation.textContent = 'Choose an algorithm and press Run or Next step.'; renderTokens(elements.frontier, []); renderTokens(elements.visited, []); renderGraph(); setStatus('Ready');
 }
-
-function setStatus(text) {
-  elements.status.textContent = text;
+function loadGraph(newGraph) { drawingMode = false; selectedEditorNodeId = null; elements.graphEditor.classList.add('hidden'); elements.svg.classList.remove('drawing-mode'); graph = cloneGraph(newGraph); adjacency = buildAdjacency(graph); selectedGoals = new Set([graph.nodes.at(-1)?.id].filter(Boolean)); populateNodeSelectors(); resetSearch(); }
+function svgPointFromEvent(event) { const point = elements.svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY; const matrix = elements.svg.getScreenCTM(); return matrix ? point.matrixTransform(matrix.inverse()) : { x: 0, y: 0 }; }
+function nextNodeId() {
+  const used = new Set(graph.nodes.map((node) => node.id));
+  for (let code = 65; code <= 90; code += 1) { const id = String.fromCharCode(code); if (!used.has(id)) return id; }
+  let number = 1; while (used.has(`N${number}`)) number += 1; return `N${number}`;
 }
-
-function loadGraph(newGraph) {
-  graph = cloneGraph(newGraph);
-  adjacency = buildAdjacency(graph);
-  populateNodeSelectors();
-  resetSearch();
+function addCustomNode(point) {
+  const id = nextNodeId(); graph.nodes.push({ id, x: Math.max(40, Math.min(860, point.x)), y: Math.max(45, Math.min(495, point.y)), h: 0 });
+  if (!selectedGoals.size) selectedGoals.add(id); populateNodeSelectors(); resetSearch(); setStatus(`Added node ${id}`);
 }
-
-function svgPointFromEvent(event) {
-  const point = elements.svg.createSVGPoint();
-  point.x = event.clientX;
-  point.y = event.clientY;
-  const matrix = elements.svg.getScreenCTM();
-  return matrix ? point.matrixTransform(matrix.inverse()) : { x: 0, y: 0 };
+function connectEditorNodes(firstId, secondId) {
+  if (firstId === secondId || graph.edges.some((edge) => edgeKey(edge.from, edge.to) === edgeKey(firstId, secondId))) { setStatus('That edge already exists'); return; }
+  const cost = isUnweightedAlgorithm() ? 1 : Math.max(1, Number(elements.edgeCost.value) || 1);
+  graph.edges.push({ from: firstId, to: secondId, cost }); adjacency = buildAdjacency(graph); resetSearch(); setStatus(`Connected ${firstId} and ${secondId}`);
 }
-
-function startDrag(event) {
-  const target = event.target.closest('[data-node-id]');
-  if (!target) return;
-  draggingNodeId = target.getAttribute('data-node-id');
-  elements.svg.setPointerCapture(event.pointerId);
+function beginDrawing() {
+  stopTimer(); drawingMode = true; selectedEditorNodeId = null; graph = { nodes: [], edges: [] }; adjacency = {};
+  selectedGoals = new Set(); elements.graphEditor.classList.remove('hidden'); elements.svg.classList.add('drawing-mode'); populateNodeSelectors(); resetSearch(); setStatus('Drawing mode: click empty space to add nodes');
 }
-
-function drag(event) {
+function clearDrawing() {
+  if (!drawingMode) beginDrawing();
+  graph = { nodes: [], edges: [] }; selectedGoals = new Set(); selectedEditorNodeId = null; populateNodeSelectors(); resetSearch(); setStatus('Drawing cleared');
+}
+function deleteSelectedNode() {
+  if (!drawingMode || !selectedEditorNodeId) { setStatus('Select a node to delete'); return; }
+  const id = selectedEditorNodeId; graph.nodes = graph.nodes.filter((node) => node.id !== id); graph.edges = graph.edges.filter((edge) => edge.from !== id && edge.to !== id); selectedGoals.delete(id); selectedEditorNodeId = null; populateNodeSelectors(); resetSearch(); setStatus(`Deleted node ${id}`);
+}
+function finishDrawing() {
+  drawingMode = false; selectedEditorNodeId = null; elements.graphEditor.classList.add('hidden'); elements.svg.classList.remove('drawing-mode');
+  if (graph.nodes.length && !selectedGoals.size) { selectedGoals.add(graph.nodes.at(-1).id); populateNodeSelectors(); }
+  resetSearch(); setStatus(graph.nodes.length ? 'Custom graph ready' : 'No graph drawn');
+}
+function updateEdgeCostControl() {
+  const disabled = isUnweightedAlgorithm(); elements.edgeCost.disabled = disabled; elements.edgeCost.closest('label')?.classList.toggle('muted-control', disabled);
+}
+function startPointer(event) {
+  const target = event.target.closest('[data-node-id]'); pointerMoved = false;
+  if (target) { draggingNodeId = target.getAttribute('data-node-id'); elements.svg.setPointerCapture(event.pointerId); }
+}
+function movePointer(event) {
   if (!draggingNodeId) return;
-  const point = svgPointFromEvent(event);
-  const node = getNode(draggingNodeId);
-  node.x = Math.max(40, Math.min(860, point.x));
-  node.y = Math.max(45, Math.min(495, point.y));
-  renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
+  const point = svgPointFromEvent(event); const node = getNode(draggingNodeId); if (!node) return;
+  pointerMoved = true; node.x = Math.max(40, Math.min(860, point.x)); node.y = Math.max(45, Math.min(495, point.y)); renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
 }
-
-function endDrag(event) {
-  if (draggingNodeId) {
-    draggingNodeId = null;
-    if (elements.svg.hasPointerCapture(event.pointerId)) {
-      elements.svg.releasePointerCapture(event.pointerId);
-    }
+function endPointer(event) {
+  const clickedNode = draggingNodeId;
+  if (draggingNodeId && elements.svg.hasPointerCapture(event.pointerId)) elements.svg.releasePointerCapture(event.pointerId);
+  draggingNodeId = null;
+  if (!drawingMode || pointerMoved) return;
+  if (clickedNode) {
+    if (!selectedEditorNodeId) { selectedEditorNodeId = clickedNode; setStatus(`Selected ${clickedNode}; click another node to connect`); }
+    else if (selectedEditorNodeId === clickedNode) { selectedEditorNodeId = null; setStatus('Node selection cleared'); }
+    else { const first = selectedEditorNodeId; selectedEditorNodeId = null; connectEditorNodes(first, clickedNode); }
+    renderGraph();
+  } else {
+    addCustomNode(svgPointFromEvent(event));
   }
 }
-
-function handleConfigurationChange() {
-  elements.summary.textContent = summaries[elements.algorithm.value];
-  resetSearch();
-}
+function handleConfigurationChange() { elements.summary.textContent = summaries[elements.algorithm.value]; updateEdgeCostControl(); resetSearch(); }
 
 elements.run.addEventListener('click', run);
 elements.step.addEventListener('click', () => { pause(); nextStep(); });
@@ -678,29 +504,25 @@ elements.pause.addEventListener('click', pause);
 elements.reset.addEventListener('click', resetSearch);
 elements.defaultGraph.addEventListener('click', () => loadGraph(defaultGraph));
 elements.randomGraph.addEventListener('click', () => loadGraph(generateRandomGraph()));
+elements.drawGraph.addEventListener('click', beginDrawing);
+elements.clearGraph.addEventListener('click', clearDrawing);
+elements.deleteNode.addEventListener('click', deleteSelectedNode);
+elements.finishDrawing.addEventListener('click', finishDrawing);
 elements.algorithm.addEventListener('change', handleConfigurationChange);
 elements.start.addEventListener('change', handleConfigurationChange);
-elements.goal.addEventListener('change', handleConfigurationChange);
-elements.speed.addEventListener('input', () => {
-  if (isRunning) {
-    stopTimer();
-    isRunning = true;
-    timer = window.setInterval(nextStep, getDelay());
-  }
-});
-elements.theme.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  elements.theme.textContent = document.body.classList.contains('dark') ? 'Light mode' : 'Dark mode';
-});
-elements.svg.addEventListener('pointerdown', startDrag);
-elements.svg.addEventListener('pointermove', drag);
-elements.svg.addEventListener('pointerup', endDrag);
-elements.svg.addEventListener('pointercancel', endDrag);
+elements.speed.addEventListener('input', () => { if (isRunning) { stopTimer(); isRunning = true; timer = window.setInterval(nextStep, getDelay()); } });
+elements.theme.addEventListener('click', () => { document.body.classList.toggle('dark'); elements.theme.textContent = document.body.classList.contains('dark') ? 'Light mode' : 'Dark mode'; });
+elements.svg.addEventListener('pointerdown', startPointer);
+elements.svg.addEventListener('pointermove', movePointer);
+elements.svg.addEventListener('pointerup', endPointer);
+elements.svg.addEventListener('pointercancel', endPointer);
 
 populateNodeSelectors();
 elements.start.value = 'A';
-elements.goal.value = 'H';
+selectedGoals = new Set(['H']);
+populateNodeSelectors();
 elements.summary.textContent = summaries.bfs;
+updateEdgeCostControl();
 resetSearch();
 
 

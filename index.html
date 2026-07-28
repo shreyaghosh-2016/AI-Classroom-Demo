@@ -45,7 +45,7 @@
           <span class="module-icon" aria-hidden="true">🔎</span>
           <span class="module-status live">Live</span>
           <strong>Search Techniques</strong>
-          <span class="module-description">Visualize BFS, DFS, UCS, Greedy Best-First Search, and A* step by step.</span>
+          <span class="module-description">Visualize BFS, DFS, IDS, UCS, Greedy Best-First Search, and A* step by step.</span>
           <span class="module-link">Open visualizer →</span>
         </button>
 
@@ -355,16 +355,38 @@
             <select id="algorithmSelect">
               <option value="bfs">Breadth-First Search</option>
               <option value="dfs">Depth-First Search</option>
+              <option value="ids">Iterative Deepening Search</option>
               <option value="ucs">Uniform-Cost Search</option>
               <option value="greedy">Greedy Best-First Search</option>
               <option value="astar">A* Search</option>
             </select>
-            <div class="two-column-controls"><div><label for="startSelect">Start</label><select id="startSelect"></select></div><div><label for="goalSelect">Goal</label><select id="goalSelect"></select></div></div>
+            <div class="two-column-controls">
+              <div><label for="startSelect">Start node</label><select id="startSelect"></select></div>
+              <div><label>Goal node(s)</label><div id="goalSelect" class="goal-checkbox-list" aria-label="Select one or more goal nodes"></div></div>
+            </div>
             <label for="speedRange">Animation speed</label>
             <div class="range-row"><span>Slow</span><input id="speedRange" type="range" min="200" max="1600" value="850" step="50" /><span>Fast</span></div>
           </section>
           <section><h2>Controls</h2><div class="button-grid"><button id="runButton" class="primary-button" type="button">Run</button><button id="stepButton" type="button">Next step</button><button id="pauseButton" type="button">Pause</button><button id="resetButton" type="button">Reset</button></div></section>
-          <section><h2>Graph presets</h2><div class="button-grid"><button id="defaultGraphButton" type="button">Default graph</button><button id="randomGraphButton" type="button">Random graph</button></div></section>
+          <section>
+            <h2>Graph source</h2>
+            <div class="button-grid">
+              <button id="defaultGraphButton" type="button">Default graph</button>
+              <button id="randomGraphButton" type="button">Random graph</button>
+              <button id="drawGraphButton" type="button">Draw your own</button>
+              <button id="clearGraphButton" type="button">Clear drawing</button>
+            </div>
+            <div id="graphEditorControls" class="graph-editor-controls hidden">
+              <p class="editor-help">Click empty canvas space to add a node. Click one node and then another to connect them. Drag nodes to reposition them.</p>
+              <label for="edgeCostInput">New edge cost
+                <input id="edgeCostInput" type="number" min="1" max="99" value="1" />
+              </label>
+              <div class="button-grid">
+                <button id="deleteNodeButton" type="button">Delete selected</button>
+                <button id="finishDrawingButton" class="primary-button" type="button">Finish drawing</button>
+              </div>
+            </div>
+          </section>
           <section><h2>Legend</h2><ul class="legend-list"><li><span class="legend-dot unvisited"></span>Unvisited</li><li><span class="legend-dot frontier"></span>Frontier</li><li><span class="legend-dot current"></span>Current</li><li><span class="legend-dot visited"></span>Explored</li><li><span class="legend-dot path"></span>Final path</li><li><span class="legend-dot goal"></span>Goal</li></ul></section>
         </aside>
 
@@ -379,6 +401,6 @@
   </main>
 
   <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
-  <script defer src="./js/app.js?v=20260728-3"></script>
+  <script defer src="./js/app.js?v=20260729-1"></script>
 </body>
 </html>
