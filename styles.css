@@ -291,3 +291,32 @@ button.module-card:hover { transform: translateY(-4px); border-color: var(--acce
   cursor: not-allowed;
   opacity: 0.55;
 }
+
+/* Configurable Two-Jug problem */
+.jug-config-panel{margin:1rem;padding:1.1rem;border:1px solid var(--border);border-radius:18px;background:var(--panel-alt)}
+.jug-config-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1rem}
+.jug-config-heading h3{margin:.15rem 0 0}
+.jug-config-grid{display:grid;grid-template-columns:repeat(3,minmax(130px,1fr)) minmax(190px,1.2fr) auto;gap:.85rem;align-items:end}
+.jug-config-grid>label>span,.jug-target-fieldset legend{display:block;margin-bottom:.4rem;color:var(--muted);font-size:.8rem;font-weight:800}
+.jug-config-grid select{width:100%}
+.jug-target-fieldset{display:flex;align-items:center;gap:1rem;min-height:44px;margin:0;padding:.55rem .75rem;border:1px solid var(--border);border-radius:12px}
+.jug-target-fieldset legend{padding:0 .2rem;margin:0}
+.jug-target-fieldset label{display:flex;align-items:center;gap:.35rem;white-space:nowrap}
+.jug-generate-button{min-height:44px;white-space:nowrap}
+.graph-toggle{display:flex;align-items:center;gap:.5rem;padding:.55rem .75rem;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
+.jug-config-status{margin:.9rem 0 0;padding:.7rem .85rem;border-radius:12px;font-weight:700}
+.jug-config-status.valid{background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.35)}
+.jug-config-status.invalid{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.35)}
+.jug-graph-panel{margin:1.2rem 0;padding:1rem;border:1px solid var(--border);border-radius:18px;background:var(--panel-alt)}
+.jug-graph-header{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:.75rem}
+.jug-graph-header h3{margin:0 0 .25rem}.jug-graph-header p{margin:0;color:var(--muted);font-size:.85rem}
+.jug-graph-legend{display:flex;gap:.7rem;flex-wrap:wrap;font-size:.75rem;color:var(--muted)}
+.jug-graph-legend span{display:flex;align-items:center;gap:.3rem}.graph-key{width:12px;height:12px;border-radius:50%;display:inline-block;border:2px solid var(--border)}
+.graph-key.start{background:#64748b}.graph-key.current{background:#2563eb}.graph-key.goal{background:#ef4444}.graph-key.route{background:#16a34a}
+.jug-graph-shell{overflow:auto;min-height:320px;border:1px solid var(--border);border-radius:14px;background:var(--panel)}
+#jugStateGraph{display:block;width:100%;min-width:720px;min-height:320px}
+.jug-graph-edge{stroke:var(--border);stroke-width:1.5}.jug-graph-edge.solution-edge{stroke:#16a34a;stroke-width:4}
+.jug-graph-node{fill:var(--panel);stroke:var(--muted);stroke-width:2}.jug-graph-node.start-node{fill:#64748b;stroke:#475569}.jug-graph-node.solution-node{stroke:#16a34a;stroke-width:4}.jug-graph-node.goal-node{fill:#ef4444;stroke:#b91c1c}.jug-graph-node.current-node{fill:#2563eb;stroke:#1d4ed8;stroke-width:5}
+.jug-graph-label{fill:var(--text);font-size:11px;font-weight:800;pointer-events:none}.jug-graph-node.start-node~.jug-graph-label,.jug-graph-node.goal-node~.jug-graph-label,.jug-graph-node.current-node~.jug-graph-label{fill:white}
+@media(max-width:1100px){.jug-config-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}.jug-generate-button{grid-column:span 2}.jug-config-heading,.jug-graph-header{flex-direction:column}}
+@media(max-width:650px){.jug-config-grid{grid-template-columns:1fr}.jug-generate-button{grid-column:auto}.jug-target-fieldset{flex-wrap:wrap}.graph-toggle{width:100%}}

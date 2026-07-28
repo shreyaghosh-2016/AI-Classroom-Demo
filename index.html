@@ -93,30 +93,116 @@
 
       <section id="jugDemo" class="problem-demo active" data-problem-panel="jug">
         <div class="demo-intro">
-          <div><p class="eyebrow">Problem 01</p><h2>Two-Jug Problem</h2><p>Use a 4-litre jug and a 3-litre jug to measure exactly 2 litres in the 4-litre jug.</p></div>
+          <div>
+            <p class="eyebrow">Problem 01</p>
+            <h2>Configurable Two-Jug Problem</h2>
+            <p id="jugProblemStatement">Use a 4-litre jug and a 3-litre jug to measure exactly 2 litres in Jug A.</p>
+          </div>
           <span class="demo-state-code">State: (x, y)</span>
         </div>
+
+        <div class="jug-config-panel" aria-label="Two-jug problem configuration">
+          <div class="jug-config-heading">
+            <div>
+              <p class="eyebrow">Create a problem instance</p>
+              <h3>Problem Configuration</h3>
+            </div>
+            <label class="graph-toggle">
+              <input id="jugGraphToggle" type="checkbox" checked />
+              <span>Show state-space graph</span>
+            </label>
+          </div>
+
+          <div class="jug-config-grid">
+            <label>
+              <span>Jug A Capacity</span>
+              <select id="jugCapacityA" aria-label="Jug A capacity">
+                <option value="1">1 L</option><option value="2">2 L</option><option value="3">3 L</option>
+                <option value="4" selected>4 L</option><option value="5">5 L</option><option value="6">6 L</option>
+                <option value="7">7 L</option><option value="8">8 L</option><option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <label>
+              <span>Jug B Capacity</span>
+              <select id="jugCapacityB" aria-label="Jug B capacity">
+                <option value="1">1 L</option><option value="2">2 L</option><option value="3" selected>3 L</option>
+                <option value="4">4 L</option><option value="5">5 L</option><option value="6">6 L</option>
+                <option value="7">7 L</option><option value="8">8 L</option><option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <label>
+              <span>Goal Amount</span>
+              <select id="jugGoalAmount" aria-label="Goal amount">
+                <option value="0">0 L</option><option value="1">1 L</option><option value="2" selected>2 L</option>
+                <option value="3">3 L</option><option value="4">4 L</option><option value="5">5 L</option>
+                <option value="6">6 L</option><option value="7">7 L</option><option value="8">8 L</option>
+                <option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <fieldset class="jug-target-fieldset">
+              <legend>Measure In</legend>
+              <label><input type="radio" name="jugTarget" value="A" checked /> Jug A</label>
+              <label><input type="radio" name="jugTarget" value="B" /> Jug B</label>
+            </fieldset>
+            <button id="jugGenerate" class="primary-button jug-generate-button" type="button">Generate Problem</button>
+          </div>
+          <p id="jugConfigStatus" class="jug-config-status" aria-live="polite"></p>
+        </div>
+
         <div class="demo-grid">
           <aside class="demo-sidebar">
-            <article class="definition-card"><strong>State space</strong><p>All pairs (x, y), where 0 ≤ x ≤ 4 and 0 ≤ y ≤ 3.</p></article>
+            <article class="definition-card"><strong>State space</strong><p id="jugStateSpaceText">All pairs (x, y), where 0 ≤ x ≤ 4 and 0 ≤ y ≤ 3.</p></article>
             <article class="definition-card"><strong>Initial state</strong><p>(0, 0): both jugs are empty.</p></article>
             <article class="definition-card"><strong>Actions</strong><p>Fill, empty, or pour water from one jug into the other.</p></article>
-            <article class="definition-card"><strong>Goal test</strong><p>x = 2, meaning the 4-litre jug contains exactly 2 litres.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p id="jugGoalTestText">x = 2, meaning Jug A contains exactly 2 litres.</p></article>
             <article class="definition-card"><strong>Path cost</strong><p>One unit for every action performed.</p></article>
           </aside>
+
           <div class="demo-workspace">
             <div class="jug-stage" aria-label="Two water jugs">
-              <div class="jug-unit"><div class="jug-capacity">4 L</div><div class="jug-vessel jug-four"><div id="jugWater4" class="jug-water"></div><span id="jugAmount4">0 L</span></div><strong>Jug A</strong></div>
+              <div class="jug-unit">
+                <div id="jugCapacityLabelA" class="jug-capacity">4 L</div>
+                <div id="jugVesselA" class="jug-vessel jug-four"><div id="jugWater4" class="jug-water"></div><span id="jugAmount4">0 L</span></div>
+                <strong>Jug A</strong>
+              </div>
               <div class="transfer-symbol">⇄</div>
-              <div class="jug-unit"><div class="jug-capacity">3 L</div><div class="jug-vessel jug-three"><div id="jugWater3" class="jug-water"></div><span id="jugAmount3">0 L</span></div><strong>Jug B</strong></div>
+              <div class="jug-unit">
+                <div id="jugCapacityLabelB" class="jug-capacity">3 L</div>
+                <div id="jugVesselB" class="jug-vessel jug-three"><div id="jugWater3" class="jug-water"></div><span id="jugAmount3">0 L</span></div>
+                <strong>Jug B</strong>
+              </div>
             </div>
+
             <div class="demo-controls action-controls" id="jugActions">
-              <button type="button" data-jug-action="fill4">Fill 4 L</button><button type="button" data-jug-action="fill3">Fill 3 L</button>
-              <button type="button" data-jug-action="empty4">Empty 4 L</button><button type="button" data-jug-action="empty3">Empty 3 L</button>
-              <button type="button" data-jug-action="pour4to3">Pour 4 → 3</button><button type="button" data-jug-action="pour3to4">Pour 3 → 4</button>
+              <button type="button" data-jug-action="fillA">Fill Jug A</button>
+              <button type="button" data-jug-action="fillB">Fill Jug B</button>
+              <button type="button" data-jug-action="emptyA">Empty Jug A</button>
+              <button type="button" data-jug-action="emptyB">Empty Jug B</button>
+              <button type="button" data-jug-action="pourAtoB">Pour A → B</button>
+              <button type="button" data-jug-action="pourBtoA">Pour B → A</button>
             </div>
-            <div class="demo-controls"><button id="jugSolve" class="primary-button" type="button">Auto solve</button><button id="jugNext" type="button">Next solution step</button><button id="jugReset" type="button">Reset</button></div>
-            <div class="demo-feedback"><div><span>Current state</span><strong id="jugState">(0, 0)</strong></div><div><span>Steps</span><strong id="jugSteps">0</strong></div><p id="jugExplanation" aria-live="polite">Choose a legal action or let BFS find a solution.</p></div>
+
+            <div class="demo-controls">
+              <button id="jugSolve" class="primary-button" type="button">Auto solve</button>
+              <button id="jugNext" type="button">Next solution step</button>
+              <button id="jugReset" type="button">Reset</button>
+            </div>
+
+            <div class="demo-feedback">
+              <div><span>Current state</span><strong id="jugState">(0, 0)</strong></div>
+              <div><span>Goal</span><strong id="jugGoalDisplay">(2, *)</strong></div>
+              <div><span>Steps</span><strong id="jugSteps">0</strong></div>
+              <p id="jugExplanation" aria-live="polite">Choose a legal action or let BFS find a solution.</p>
+            </div>
+
+            <section id="jugGraphPanel" class="jug-graph-panel">
+              <div class="jug-graph-header">
+                <div><h3>State-Space Graph</h3><p>Every node is a reachable water distribution. The green route is a shortest BFS solution.</p></div>
+                <div class="jug-graph-legend"><span><i class="graph-key start"></i>Start</span><span><i class="graph-key current"></i>Current</span><span><i class="graph-key goal"></i>Goal</span><span><i class="graph-key route"></i>Solution</span></div>
+              </div>
+              <div class="jug-graph-shell"><svg id="jugStateGraph" viewBox="0 0 900 460" role="img" aria-label="Water-jug state-space graph"></svg></div>
+            </section>
+
             <div><h3>Visited state sequence</h3><div id="jugHistory" class="state-history"><span class="state-chip current-chip">(0, 0)</span></div></div>
           </div>
         </div>
@@ -214,6 +300,6 @@
   </main>
 
   <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
-  <script defer src="./js/app.js?v=20260728-2"></script>
+  <script defer src="./js/app.js?v=20260728-3"></script>
 </body>
 </html>

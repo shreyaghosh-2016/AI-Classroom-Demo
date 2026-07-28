@@ -32,3 +32,7 @@ Then open `http://localhost:8000`.
 Push the repository to GitHub. The workflow in `.github/workflows/deploy-pages.yml` deploys the site automatically.
 
 In the repository, set **Settings → Pages → Source → GitHub Actions**.
+
+## Configurable Two-Jug Demo
+
+The Two-Jug module now supports capacities from 1–10 litres, a selectable goal amount, selection of the target jug, generalized BFS solving, mathematical solvability feedback, and an optional reachable state-space graph.

@@ -748,123 +748,280 @@ function initProblemTabs() {
 }
 
 function initTwoJugDemo() {
-  const actionPanel = document.querySelector('#jugActions');
-  const water4 = document.querySelector('#jugWater4');
-  const water3 = document.querySelector('#jugWater3');
-  const amount4 = document.querySelector('#jugAmount4');
-  const amount3 = document.querySelector('#jugAmount3');
-  const stateOutput = document.querySelector('#jugState');
-  const stepOutput = document.querySelector('#jugSteps');
-  const explanation = document.querySelector('#jugExplanation');
-  const history = document.querySelector('#jugHistory');
-  const solveButton = document.querySelector('#jugSolve');
-  const nextButton = document.querySelector('#jugNext');
-  const resetButton = document.querySelector('#jugReset');
-
-  if (![actionPanel, water4, water3, amount4, amount3, stateOutput, stepOutput,
-    explanation, history, solveButton, nextButton, resetButton].every(Boolean)) return;
-
-  const actions = ['fill4', 'fill3', 'empty4', 'empty3', 'pour4to3', 'pour3to4'];
-  const labels = {
-    fill4: 'Fill Jug A to 4 L',
-    fill3: 'Fill Jug B to 3 L',
-    empty4: 'Empty Jug A',
-    empty3: 'Empty Jug B',
-    pour4to3: 'Pour Jug A into Jug B',
-    pour3to4: 'Pour Jug B into Jug A'
+  const el = {
+    actionPanel: document.querySelector('#jugActions'),
+    waterA: document.querySelector('#jugWater4'),
+    waterB: document.querySelector('#jugWater3'),
+    amountA: document.querySelector('#jugAmount4'),
+    amountB: document.querySelector('#jugAmount3'),
+    vesselA: document.querySelector('#jugVesselA'),
+    vesselB: document.querySelector('#jugVesselB'),
+    capacityLabelA: document.querySelector('#jugCapacityLabelA'),
+    capacityLabelB: document.querySelector('#jugCapacityLabelB'),
+    stateOutput: document.querySelector('#jugState'),
+    goalOutput: document.querySelector('#jugGoalDisplay'),
+    stepOutput: document.querySelector('#jugSteps'),
+    explanation: document.querySelector('#jugExplanation'),
+    history: document.querySelector('#jugHistory'),
+    solveButton: document.querySelector('#jugSolve'),
+    nextButton: document.querySelector('#jugNext'),
+    resetButton: document.querySelector('#jugReset'),
+    generateButton: document.querySelector('#jugGenerate'),
+    capacityAInput: document.querySelector('#jugCapacityA'),
+    capacityBInput: document.querySelector('#jugCapacityB'),
+    goalInput: document.querySelector('#jugGoalAmount'),
+    targetInputs: [...document.querySelectorAll('input[name="jugTarget"]')],
+    configStatus: document.querySelector('#jugConfigStatus'),
+    problemStatement: document.querySelector('#jugProblemStatement'),
+    stateSpaceText: document.querySelector('#jugStateSpaceText'),
+    goalTestText: document.querySelector('#jugGoalTestText'),
+    graphToggle: document.querySelector('#jugGraphToggle'),
+    graphPanel: document.querySelector('#jugGraphPanel'),
+    graphSvg: document.querySelector('#jugStateGraph')
   };
 
+  const required = [
+    el.actionPanel, el.waterA, el.waterB, el.amountA, el.amountB,
+    el.vesselA, el.vesselB, el.capacityLabelA, el.capacityLabelB,
+    el.stateOutput, el.goalOutput, el.stepOutput, el.explanation,
+    el.history, el.solveButton, el.nextButton, el.resetButton,
+    el.generateButton, el.capacityAInput, el.capacityBInput,
+    el.goalInput, el.configStatus, el.problemStatement,
+    el.stateSpaceText, el.goalTestText, el.graphToggle,
+    el.graphPanel, el.graphSvg
+  ];
+  if (!required.every(Boolean) || el.targetInputs.length !== 2) return;
+
+  const ACTIONS = ['fillA', 'fillB', 'emptyA', 'emptyB', 'pourAtoB', 'pourBtoA'];
+  const ACTION_LABELS = {
+    fillA: 'Fill Jug A', fillB: 'Fill Jug B',
+    emptyA: 'Empty Jug A', emptyB: 'Empty Jug B',
+    pourAtoB: 'Pour Jug A into Jug B',
+    pourBtoA: 'Pour Jug B into Jug A'
+  };
+
+  let config = { capacityA: 4, capacityB: 3, goal: 2, target: 'A' };
   let state = [0, 0];
   let stepsTaken = 0;
   let plan = [];
+  let planStates = [];
   let planIndex = 0;
   let isRunning = false;
+  let solvable = true;
+  let graphData = { states: [], edges: [] };
 
   const sameState = (a, b) => a[0] === b[0] && a[1] === b[1];
   const stateKey = (s) => `${s[0]},${s[1]}`;
   const formatState = (s) => `(${s[0]}, ${s[1]})`;
-  const isGoal = (s) => s[0] === 2;
+  const goalPattern = () => config.target === 'A' ? `(${config.goal}, *)` : `(*, ${config.goal})`;
+  const isGoal = (s) => config.target === 'A' ? s[0] === config.goal : s[1] === config.goal;
+
+  function gcd(a, b) {
+    let x = Math.abs(a);
+    let y = Math.abs(b);
+    while (y) [x, y] = [y, x % y];
+    return x;
+  }
 
   function transition(source, action) {
     let [a, b] = source;
-
-    if (action === 'fill4') a = 4;
-    if (action === 'fill3') b = 3;
-    if (action === 'empty4') a = 0;
-    if (action === 'empty3') b = 0;
-
-    if (action === 'pour4to3') {
-      const transferred = Math.min(a, 3 - b);
+    if (action === 'fillA') a = config.capacityA;
+    if (action === 'fillB') b = config.capacityB;
+    if (action === 'emptyA') a = 0;
+    if (action === 'emptyB') b = 0;
+    if (action === 'pourAtoB') {
+      const transferred = Math.min(a, config.capacityB - b);
       a -= transferred;
       b += transferred;
     }
-
-    if (action === 'pour3to4') {
-      const transferred = Math.min(b, 4 - a);
+    if (action === 'pourBtoA') {
+      const transferred = Math.min(b, config.capacityA - a);
       b -= transferred;
       a += transferred;
     }
-
     return [a, b];
   }
 
+  function buildReachableGraph() {
+    const start = [0, 0];
+    const queue = [start];
+    const visited = new Map([[stateKey(start), start]]);
+    const edgeMap = new Map();
+
+    while (queue.length) {
+      const current = queue.shift();
+      for (const action of ACTIONS) {
+        const next = transition(current, action);
+        if (sameState(current, next)) continue;
+        const fromKey = stateKey(current);
+        const toKey = stateKey(next);
+        const undirectedKey = [fromKey, toKey].sort().join('|');
+        if (!edgeMap.has(undirectedKey)) {
+          edgeMap.set(undirectedKey, { from: [...current], to: [...next] });
+        }
+        if (!visited.has(toKey)) {
+          visited.set(toKey, [...next]);
+          queue.push(next);
+        }
+      }
+    }
+    return { states: [...visited.values()], edges: [...edgeMap.values()] };
+  }
+
   function findShortestPlan(start) {
-    const queue = [{ state: [...start], path: [] }];
+    const queue = [{ state: [...start], actions: [], states: [[...start]] }];
     const visited = new Set([stateKey(start)]);
 
     while (queue.length) {
       const node = queue.shift();
-      if (isGoal(node.state)) return node.path;
+      if (isGoal(node.state)) return node;
 
-      for (const action of actions) {
+      for (const action of ACTIONS) {
         const next = transition(node.state, action);
         const key = stateKey(next);
         if (sameState(next, node.state) || visited.has(key)) continue;
         visited.add(key);
-        queue.push({ state: next, path: [...node.path, action] });
+        queue.push({
+          state: next,
+          actions: [...node.actions, action],
+          states: [...node.states, next]
+        });
       }
     }
+    return null;
+  }
 
-    return [];
+  function checkSolvability() {
+    if (config.goal < 0) return { ok: false, message: 'Goal amount cannot be negative.' };
+    const targetCapacity = config.target === 'A' ? config.capacityA : config.capacityB;
+    if (config.goal > targetCapacity) {
+      return { ok: false, message: `Jug ${config.target} can hold at most ${targetCapacity} L, so ${config.goal} L cannot be measured in it.` };
+    }
+    if (config.goal === 0) {
+      return { ok: true, message: 'The initial state already satisfies the goal of 0 L.' };
+    }
+    const divisor = gcd(config.capacityA, config.capacityB);
+    if (config.goal % divisor !== 0) {
+      return { ok: false, message: `No solution: gcd(${config.capacityA}, ${config.capacityB}) = ${divisor}, and ${config.goal} is not divisible by ${divisor}.` };
+    }
+    return { ok: true, message: `Solvable: gcd(${config.capacityA}, ${config.capacityB}) = ${divisor}, which divides the goal amount ${config.goal}.` };
+  }
+
+  function createSvg(tag, attrs = {}) {
+    const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    Object.entries(attrs).forEach(([name, value]) => node.setAttribute(name, String(value)));
+    return node;
+  }
+
+  function renderStateGraph() {
+    el.graphSvg.replaceChildren();
+    if (!el.graphToggle.checked) return;
+
+    const states = graphData.states;
+    if (!states.length) return;
+
+    const width = 900;
+    const height = Math.max(430, Math.ceil(states.length / 8) * 86 + 80);
+    el.graphSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    const positions = new Map();
+    const columns = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(states.length * 1.6))));
+    const rows = Math.ceil(states.length / columns);
+    const xGap = width / (columns + 1);
+    const yGap = (height - 40) / (rows + 1);
+
+    states.forEach((s, index) => {
+      const row = Math.floor(index / columns);
+      const column = index % columns;
+      const stagger = row % 2 ? xGap * 0.25 : 0;
+      positions.set(stateKey(s), { x: xGap * (column + 1) + stagger, y: yGap * (row + 1) + 20 });
+    });
+
+    const routePairs = new Set();
+    for (let i = 0; i < planStates.length - 1; i += 1) {
+      routePairs.add([stateKey(planStates[i]), stateKey(planStates[i + 1])].sort().join('|'));
+    }
+
+    const edgeLayer = createSvg('g', { class: 'jug-graph-edges' });
+    graphData.edges.forEach((edge) => {
+      const from = positions.get(stateKey(edge.from));
+      const to = positions.get(stateKey(edge.to));
+      if (!from || !to) return;
+      const pairKey = [stateKey(edge.from), stateKey(edge.to)].sort().join('|');
+      edgeLayer.append(createSvg('line', {
+        x1: from.x, y1: from.y, x2: to.x, y2: to.y,
+        class: routePairs.has(pairKey) ? 'jug-graph-edge solution-edge' : 'jug-graph-edge'
+      }));
+    });
+    el.graphSvg.append(edgeLayer);
+
+    const nodeLayer = createSvg('g', { class: 'jug-graph-nodes' });
+    states.forEach((s) => {
+      const pos = positions.get(stateKey(s));
+      const group = createSvg('g', { class: 'jug-graph-node-group', transform: `translate(${pos.x}, ${pos.y})` });
+      const classes = ['jug-graph-node'];
+      if (sameState(s, [0, 0])) classes.push('start-node');
+      if (isGoal(s)) classes.push('goal-node');
+      if (planStates.some((routeState) => sameState(routeState, s))) classes.push('solution-node');
+      if (sameState(s, state)) classes.push('current-node');
+      group.append(createSvg('circle', { r: 24, class: classes.join(' ') }));
+      const text = createSvg('text', { x: 0, y: 4, 'text-anchor': 'middle', class: 'jug-graph-label' });
+      text.textContent = formatState(s);
+      group.append(text);
+      nodeLayer.append(group);
+    });
+    el.graphSvg.append(nodeLayer);
   }
 
   function addHistory(actionLabel) {
     const wrapper = document.createElement('div');
     wrapper.className = 'jug-history-entry';
-
     const chip = document.createElement('span');
     chip.className = 'state-chip current-chip';
     chip.textContent = formatState(state);
-
     const caption = document.createElement('small');
     caption.textContent = actionLabel;
-
-    history.querySelectorAll('.current-chip').forEach((item) => item.classList.remove('current-chip'));
+    el.history.querySelectorAll('.current-chip').forEach((item) => item.classList.remove('current-chip'));
     wrapper.append(chip, caption);
-    history.append(wrapper);
+    el.history.append(wrapper);
   }
 
   function updateButtons() {
-    actionPanel.querySelectorAll('[data-jug-action]').forEach((button) => {
+    el.actionPanel.querySelectorAll('[data-jug-action]').forEach((button) => {
       const next = transition(state, button.dataset.jugAction);
-      button.disabled = isRunning || sameState(state, next);
+      button.disabled = isRunning || !solvable || sameState(state, next) || isGoal(state);
     });
-    nextButton.disabled = isRunning || isGoal(state);
-    solveButton.textContent = isRunning ? 'Pause' : 'Auto solve';
+    el.nextButton.disabled = isRunning || !solvable || isGoal(state);
+    el.solveButton.disabled = !solvable || isGoal(state);
+    el.solveButton.textContent = isRunning ? 'Pause' : 'Auto solve';
+  }
+
+  function setVesselSizes() {
+    const maxCapacity = Math.max(config.capacityA, config.capacityB);
+    const maxHeight = 230;
+    const minHeight = 105;
+    const heightFor = (capacity) => Math.round(minHeight + (capacity / maxCapacity) * (maxHeight - minHeight));
+    el.vesselA.style.height = `${heightFor(config.capacityA)}px`;
+    el.vesselB.style.height = `${heightFor(config.capacityB)}px`;
   }
 
   function render(message) {
-    water4.style.height = `${(state[0] / 4) * 100}%`;
-    water3.style.height = `${(state[1] / 3) * 100}%`;
-    amount4.textContent = `${state[0]} L`;
-    amount3.textContent = `${state[1]} L`;
-    stateOutput.textContent = formatState(state);
-    stepOutput.textContent = String(stepsTaken);
-    stateOutput.classList.toggle('goal-text', isGoal(state));
-    explanation.textContent = isGoal(state)
-      ? `Goal reached! Jug A contains exactly 2 litres after ${stepsTaken} actions.`
+    el.waterA.style.height = `${(state[0] / config.capacityA) * 100}%`;
+    el.waterB.style.height = `${(state[1] / config.capacityB) * 100}%`;
+    el.amountA.textContent = `${state[0]} L`;
+    el.amountB.textContent = `${state[1]} L`;
+    el.capacityLabelA.textContent = `${config.capacityA} L`;
+    el.capacityLabelB.textContent = `${config.capacityB} L`;
+    el.stateOutput.textContent = formatState(state);
+    el.goalOutput.textContent = goalPattern();
+    el.stepOutput.textContent = String(stepsTaken);
+    el.stateOutput.classList.toggle('goal-text', isGoal(state));
+    el.explanation.textContent = isGoal(state)
+      ? `Goal reached! Jug ${config.target} contains exactly ${config.goal} litres after ${stepsTaken} action${stepsTaken === 1 ? '' : 's'}.`
       : message;
+    setVesselSizes();
     updateButtons();
+    renderStateGraph();
   }
 
   function cancelRun() {
@@ -876,40 +1033,79 @@ function initTwoJugDemo() {
   function perform(action, searchSelected = false) {
     const previous = [...state];
     const next = transition(previous, action);
-
     if (sameState(previous, next)) {
-      render(`${labels[action]} is not useful in state ${formatState(state)}.`);
+      render(`${ACTION_LABELS[action]} does not change state ${formatState(state)}.`);
       return false;
     }
-
     state = next;
     stepsTaken += 1;
-    addHistory(labels[action]);
-    render(`${searchSelected ? 'BFS selected: ' : ''}${labels[action]}. ${formatState(previous)} → ${formatState(state)}.`);
+    addHistory(ACTION_LABELS[action]);
+    render(`${searchSelected ? 'BFS selected: ' : ''}${ACTION_LABELS[action]}. ${formatState(previous)} → ${formatState(state)}.`);
     return true;
   }
 
   function preparePlan() {
-    plan = findShortestPlan(state);
-    planIndex = 0;
-    if (!plan.length) {
-      render(isGoal(state) ? 'The goal is already satisfied.' : 'No solution was found.');
+    const result = findShortestPlan(state);
+    if (!result || !result.actions.length) {
+      plan = [];
+      planStates = [];
+      planIndex = 0;
+      render(isGoal(state) ? 'The goal is already satisfied.' : 'No solution was found from the current state.');
       return false;
     }
-    explanation.textContent = `BFS found a shortest plan of ${plan.length} remaining actions.`;
+    plan = result.actions;
+    planStates = result.states;
+    planIndex = 0;
+    render(`BFS found a shortest plan of ${plan.length} remaining action${plan.length === 1 ? '' : 's'}.`);
     return true;
   }
 
-  actionPanel.addEventListener('click', (event) => {
+  function resetSimulation(message = 'Both jugs are empty. Choose an action or let BFS solve the problem.') {
+    cancelRun();
+    state = [0, 0];
+    stepsTaken = 0;
+    plan = [];
+    planStates = [];
+    planIndex = 0;
+    el.history.replaceChildren();
+    addHistory('Initial state');
+    render(message);
+  }
+
+  function generateProblem() {
+    cancelRun();
+    config = {
+      capacityA: Number(el.capacityAInput.value),
+      capacityB: Number(el.capacityBInput.value),
+      goal: Number(el.goalInput.value),
+      target: el.targetInputs.find((input) => input.checked)?.value || 'A'
+    };
+
+    const result = checkSolvability();
+    solvable = result.ok;
+    el.configStatus.textContent = result.message;
+    el.configStatus.classList.toggle('valid', result.ok);
+    el.configStatus.classList.toggle('invalid', !result.ok);
+    el.problemStatement.textContent = `Use a ${config.capacityA}-litre jug and a ${config.capacityB}-litre jug to measure exactly ${config.goal} litre${config.goal === 1 ? '' : 's'} in Jug ${config.target}.`;
+    el.stateSpaceText.textContent = `All pairs (x, y), where 0 ≤ x ≤ ${config.capacityA} and 0 ≤ y ≤ ${config.capacityB}.`;
+    const variable = config.target === 'A' ? 'x' : 'y';
+    el.goalTestText.textContent = `${variable} = ${config.goal}, meaning Jug ${config.target} contains exactly ${config.goal} litre${config.goal === 1 ? '' : 's'}.`;
+
+    graphData = buildReachableGraph();
+    resetSimulation(result.ok ? `${result.message} Choose an action or let BFS solve it.` : result.message);
+  }
+
+  el.actionPanel.addEventListener('click', (event) => {
     const button = event.target.closest('[data-jug-action]');
     if (!button) return;
     cancelRun();
     plan = [];
+    planStates = [];
     planIndex = 0;
     perform(button.dataset.jugAction);
   });
 
-  nextButton.addEventListener('click', () => {
+  el.nextButton.addEventListener('click', () => {
     cancelRun();
     if (!plan.length || planIndex >= plan.length) {
       if (!preparePlan()) return;
@@ -918,14 +1114,15 @@ function initTwoJugDemo() {
     planIndex += 1;
   });
 
-  solveButton.addEventListener('click', async () => {
+  el.solveButton.addEventListener('click', async () => {
     if (isRunning) {
       cancelRun();
       render('Automatic solving paused.');
       return;
     }
-
-    if (!preparePlan()) return;
+    if (!plan.length || planIndex >= plan.length) {
+      if (!preparePlan()) return;
+    }
     isRunning = true;
     const thisRun = ++problemRunId;
     updateButtons();
@@ -936,27 +1133,20 @@ function initTwoJugDemo() {
       planIndex += 1;
       await wait(850);
     }
-
     if (thisRun === problemRunId) {
       isRunning = false;
       updateButtons();
     }
   });
 
-  resetButton.addEventListener('click', () => {
-    cancelRun();
-    state = [0, 0];
-    stepsTaken = 0;
-    plan = [];
-    planIndex = 0;
-    history.replaceChildren();
-    addHistory('Initial state');
-    render('Both jugs are empty. Choose an action or let BFS solve the problem.');
+  el.resetButton.addEventListener('click', () => resetSimulation());
+  el.generateButton.addEventListener('click', generateProblem);
+  el.graphToggle.addEventListener('change', () => {
+    el.graphPanel.classList.toggle('hidden', !el.graphToggle.checked);
+    if (el.graphToggle.checked) renderStateGraph();
   });
 
-  history.replaceChildren();
-  addHistory('Initial state');
-  render('Both jugs are empty. Choose an action or let BFS solve the problem.');
+  generateProblem();
 }
 
 function initEightPuzzleDemo() {
