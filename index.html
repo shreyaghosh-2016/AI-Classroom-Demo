@@ -3,136 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive visualizer for BFS, DFS, UCS, Greedy Best-First Search, and A*." />
-  <title>Search Algorithm Visualizer</title>
+  <meta name="description" content="Interactive AI classroom visualizations for problem solving and search." />
+  <title>AI Learning Lab</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <header class="site-header">
-    <div>
-      <p class="eyebrow">AI Search • Classroom Demo</p>
-      <h1>Search Algorithm Visualizer</h1>
-      <p class="subtitle">Explore how the frontier, explored set, path cost, and heuristics change at every step.</p>
+  <header class="site-header app-header">
+    <button id="brandButton" class="brand-button" type="button" aria-label="Go to AI Learning Lab home">
+      <span class="brand-mark">AI</span>
+      <span>
+        <span class="eyebrow">Interactive classroom demos</span>
+        <strong class="brand-title">AI Learning Lab</strong>
+      </span>
+    </button>
+    <div class="header-actions">
+      <button id="homeButton" class="secondary-button hidden" type="button">All modules</button>
+      <button id="themeToggle" class="secondary-button" type="button" aria-label="Toggle theme">Dark mode</button>
     </div>
-    <button id="themeToggle" class="secondary-button" type="button" aria-label="Toggle theme">Dark mode</button>
   </header>
 
-  <main class="layout">
-    <aside class="control-panel" aria-label="Visualization controls">
-      <section>
-        <h2>Configuration</h2>
-        <label for="algorithmSelect">Algorithm</label>
-        <select id="algorithmSelect">
-          <option value="bfs">Breadth-First Search</option>
-          <option value="dfs">Depth-First Search</option>
-          <option value="ucs">Uniform-Cost Search</option>
-          <option value="greedy">Greedy Best-First Search</option>
-          <option value="astar">A* Search</option>
-        </select>
+  <main>
+    <section id="homeView" class="home-view view-active">
+      <div class="hero-section">
+        <p class="eyebrow">Artificial Intelligence</p>
+        <h1>Learn AI by seeing it work</h1>
+        <p class="subtitle">Choose a topic to explore interactive demonstrations, step-by-step explanations, and classroom-ready visualizations.</p>
+      </div>
 
-        <div class="two-column-controls">
-          <div>
-            <label for="startSelect">Start</label>
-            <select id="startSelect"></select>
-          </div>
-          <div>
-            <label for="goalSelect">Goal</label>
-            <select id="goalSelect"></select>
-          </div>
-        </div>
+      <div class="module-grid" aria-label="AI learning modules">
+        <button class="module-card live-module" type="button" data-view="problemView">
+          <span class="module-number">01</span>
+          <span class="module-icon" aria-hidden="true">🧩</span>
+          <span class="module-status live">Live</span>
+          <strong>Automated Problem Solving</strong>
+          <span class="module-description">Understand how an agent converts a real-world task into states, actions, goals, and costs.</span>
+          <span class="module-link">Open module →</span>
+        </button>
 
-        <label for="speedRange">Animation speed</label>
-        <div class="range-row">
-          <span>Slow</span>
-          <input id="speedRange" type="range" min="200" max="1600" value="850" step="50" />
-          <span>Fast</span>
-        </div>
-      </section>
+        <button class="module-card live-module" type="button" data-view="searchView">
+          <span class="module-number">02</span>
+          <span class="module-icon" aria-hidden="true">🔎</span>
+          <span class="module-status live">Live</span>
+          <strong>Search Techniques</strong>
+          <span class="module-description">Visualize BFS, DFS, UCS, Greedy Best-First Search, and A* step by step.</span>
+          <span class="module-link">Open visualizer →</span>
+        </button>
 
-      <section>
-        <h2>Controls</h2>
-        <div class="button-grid">
-          <button id="runButton" class="primary-button" type="button">Run</button>
-          <button id="stepButton" type="button">Next step</button>
-          <button id="pauseButton" type="button">Pause</button>
-          <button id="resetButton" type="button">Reset</button>
-        </div>
-      </section>
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">03</span>
+          <span class="module-icon" aria-hidden="true">🗺️</span>
+          <span class="module-status soon">Coming soon</span>
+          <strong>Planning</strong>
+          <span class="module-description">Explore actions, preconditions, effects, state transitions, and plan generation.</span>
+        </article>
 
-      <section>
-        <h2>Graph presets</h2>
-        <div class="button-grid">
-          <button id="defaultGraphButton" type="button">Default graph</button>
-          <button id="randomGraphButton" type="button">Random graph</button>
-        </div>
-      </section>
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">04</span>
+          <span class="module-icon" aria-hidden="true">🎯</span>
+          <span class="module-status soon">Coming soon</span>
+          <strong>Reinforcement Learning</strong>
+          <span class="module-description">Experiment with agents, rewards, policies, value functions, and learning episodes.</span>
+        </article>
 
-      <section>
-        <h2>Legend</h2>
-        <ul class="legend-list">
-          <li><span class="legend-dot unvisited"></span>Unvisited</li>
-          <li><span class="legend-dot frontier"></span>Frontier</li>
-          <li><span class="legend-dot current"></span>Current</li>
-          <li><span class="legend-dot visited"></span>Explored</li>
-          <li><span class="legend-dot path"></span>Final path</li>
-          <li><span class="legend-dot goal"></span>Goal</li>
-        </ul>
-      </section>
-    </aside>
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">05</span>
+          <span class="module-icon" aria-hidden="true">✨</span>
+          <span class="module-status soon">Coming soon</span>
+          <strong>Generative AI</strong>
+          <span class="module-description">Explore prompting, language models, retrieval, agents, and generation workflows.</span>
+        </article>
+      </div>
+    </section>
 
-    <section class="visualization-area">
-      <div class="graph-toolbar">
+    <section id="problemView" class="module-view hidden">
+      <div class="module-page-header">
         <div>
-          <h2 id="graphTitle">State-space graph</h2>
-          <p id="algorithmSummary">BFS expands the shallowest unexpanded node first.</p>
+          <p class="eyebrow">Module 01</p>
+          <h1>Automated Problem Solving</h1>
+          <p class="subtitle">Before choosing a search algorithm, an intelligent agent must first formulate the problem correctly.</p>
         </div>
-        <div class="status-badge" id="statusBadge" aria-live="polite">Ready</div>
+        <button class="primary-button open-search-button" type="button">Continue to Search Techniques</button>
       </div>
 
-      <div class="graph-shell">
-        <svg id="graphSvg" viewBox="0 0 900 540" role="img" aria-label="Interactive state-space graph"></svg>
+      <div class="problem-layout">
+        <article class="problem-example-card">
+          <div class="example-heading">
+            <span class="module-icon" aria-hidden="true">🚗</span>
+            <div>
+              <p class="eyebrow">Example problem</p>
+              <h2>Reach the university from home</h2>
+            </div>
+          </div>
+          <div class="formulation-flow" aria-label="Problem formulation components">
+            <div class="formulation-item"><span>1</span><div><strong>Initial state</strong><p>The agent is at Home.</p></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="formulation-item"><span>2</span><div><strong>Actions</strong><p>Travel along any available road.</p></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="formulation-item"><span>3</span><div><strong>Transition model</strong><p>A road moves the agent from one location to another.</p></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="formulation-item"><span>4</span><div><strong>Goal test</strong><p>Has the agent reached the University?</p></div></div>
+            <div class="flow-arrow">↓</div>
+            <div class="formulation-item"><span>5</span><div><strong>Path cost</strong><p>Total distance, time, or travel expense.</p></div></div>
+          </div>
+        </article>
+
+        <div class="concept-grid">
+          <article class="concept-card"><span class="concept-symbol">S</span><h3>State space</h3><p>All situations the agent may encounter while solving the problem.</p></article>
+          <article class="concept-card"><span class="concept-symbol">A</span><h3>Actions</h3><p>The choices available to the agent in a particular state.</p></article>
+          <article class="concept-card"><span class="concept-symbol">G</span><h3>Goal</h3><p>The desired state or condition that defines successful completion.</p></article>
+          <article class="concept-card"><span class="concept-symbol">C</span><h3>Cost</h3><p>A numerical measure used to compare alternative solution paths.</p></article>
+          <article class="concept-card wide"><h3>Problem-solving agent cycle</h3><div class="agent-cycle"><span>Perceive</span><b>→</b><span>Formulate goal</span><b>→</b><span>Formulate problem</span><b>→</b><span>Search</span><b>→</b><span>Act</span></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="searchView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 02</p>
+          <h1>Search Algorithm Visualizer</h1>
+          <p class="subtitle">Explore how the frontier, explored set, path cost, and heuristics change at every step.</p>
+        </div>
       </div>
 
-      <div class="metrics-grid" aria-live="polite">
-        <article class="metric-card">
-          <span>Current node</span>
-          <strong id="currentMetric">—</strong>
-        </article>
-        <article class="metric-card">
-          <span>Nodes expanded</span>
-          <strong id="expandedMetric">0</strong>
-        </article>
-        <article class="metric-card">
-          <span>Path cost</span>
-          <strong id="costMetric">—</strong>
-        </article>
-        <article class="metric-card">
-          <span>Step</span>
-          <strong id="stepMetric">0 / 0</strong>
-        </article>
-      </div>
+      <div class="layout">
+        <aside class="control-panel" aria-label="Visualization controls">
+          <section>
+            <h2>Configuration</h2>
+            <label for="algorithmSelect">Algorithm</label>
+            <select id="algorithmSelect">
+              <option value="bfs">Breadth-First Search</option>
+              <option value="dfs">Depth-First Search</option>
+              <option value="ucs">Uniform-Cost Search</option>
+              <option value="greedy">Greedy Best-First Search</option>
+              <option value="astar">A* Search</option>
+            </select>
+            <div class="two-column-controls"><div><label for="startSelect">Start</label><select id="startSelect"></select></div><div><label for="goalSelect">Goal</label><select id="goalSelect"></select></div></div>
+            <label for="speedRange">Animation speed</label>
+            <div class="range-row"><span>Slow</span><input id="speedRange" type="range" min="200" max="1600" value="850" step="50" /><span>Fast</span></div>
+          </section>
+          <section><h2>Controls</h2><div class="button-grid"><button id="runButton" class="primary-button" type="button">Run</button><button id="stepButton" type="button">Next step</button><button id="pauseButton" type="button">Pause</button><button id="resetButton" type="button">Reset</button></div></section>
+          <section><h2>Graph presets</h2><div class="button-grid"><button id="defaultGraphButton" type="button">Default graph</button><button id="randomGraphButton" type="button">Random graph</button></div></section>
+          <section><h2>Legend</h2><ul class="legend-list"><li><span class="legend-dot unvisited"></span>Unvisited</li><li><span class="legend-dot frontier"></span>Frontier</li><li><span class="legend-dot current"></span>Current</li><li><span class="legend-dot visited"></span>Explored</li><li><span class="legend-dot path"></span>Final path</li><li><span class="legend-dot goal"></span>Goal</li></ul></section>
+        </aside>
 
-      <div class="details-grid">
-        <article class="detail-card">
-          <h3>Frontier</h3>
-          <div id="frontierList" class="token-list"><span class="empty-token">Empty</span></div>
-        </article>
-        <article class="detail-card">
-          <h3>Explored set</h3>
-          <div id="visitedList" class="token-list"><span class="empty-token">Empty</span></div>
-        </article>
-        <article class="detail-card explanation-card">
-          <h3>What happened?</h3>
-          <p id="stepExplanation">Choose an algorithm and press Run or Next step.</p>
-        </article>
+        <section class="visualization-area">
+          <div class="graph-toolbar"><div><h2 id="graphTitle">State-space graph</h2><p id="algorithmSummary">BFS expands the shallowest unexpanded node first.</p></div><div class="status-badge" id="statusBadge" aria-live="polite">Ready</div></div>
+          <div class="graph-shell"><svg id="graphSvg" viewBox="0 0 900 540" role="img" aria-label="Interactive state-space graph"></svg></div>
+          <div class="metrics-grid" aria-live="polite"><article class="metric-card"><span>Current node</span><strong id="currentMetric">—</strong></article><article class="metric-card"><span>Nodes expanded</span><strong id="expandedMetric">0</strong></article><article class="metric-card"><span>Path cost</span><strong id="costMetric">—</strong></article><article class="metric-card"><span>Step</span><strong id="stepMetric">0 / 0</strong></article></div>
+          <div class="details-grid"><article class="detail-card"><h3>Frontier</h3><div id="frontierList" class="token-list"><span class="empty-token">Empty</span></div></article><article class="detail-card"><h3>Explored set</h3><div id="visitedList" class="token-list"><span class="empty-token">Empty</span></div></article><article class="detail-card explanation-card"><h3>What happened?</h3><p id="stepExplanation">Choose an algorithm and press Run or Next step.</p></article></div>
+        </section>
       </div>
     </section>
   </main>
 
-  <footer>
-    Built for classroom demonstrations of uninformed and informed search.
-  </footer>
-
+  <footer>AI Learning Lab • Built for interactive classroom demonstrations</footer>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

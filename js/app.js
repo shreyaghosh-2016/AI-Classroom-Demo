@@ -32,6 +32,40 @@ const elements = {
   explanation: document.querySelector('#stepExplanation')
 };
 
+
+const views = {
+  homeView: document.querySelector('#homeView'),
+  problemView: document.querySelector('#problemView'),
+  searchView: document.querySelector('#searchView')
+};
+const homeButton = document.querySelector('#homeButton');
+const brandButton = document.querySelector('#brandButton');
+
+function showView(viewId) {
+  stopTimer();
+  Object.entries(views).forEach(([id, view]) => {
+    view.classList.toggle('hidden', id !== viewId);
+    view.classList.toggle('view-active', id === viewId);
+  });
+  homeButton.classList.toggle('hidden', viewId === 'homeView');
+  document.title = viewId === 'homeView'
+    ? 'AI Learning Lab'
+    : viewId === 'problemView'
+      ? 'Automated Problem Solving | AI Learning Lab'
+      : 'Search Techniques | AI Learning Lab';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (viewId === 'searchView') renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
+}
+
+document.querySelectorAll('[data-view]').forEach(card => {
+  card.addEventListener('click', () => showView(card.dataset.view));
+});
+document.querySelectorAll('.open-search-button').forEach(button => {
+  button.addEventListener('click', () => showView('searchView'));
+});
+homeButton.addEventListener('click', () => showView('homeView'));
+brandButton.addEventListener('click', () => showView('homeView'));
+
 const summaries = {
   bfs: 'BFS expands the shallowest unexpanded node first using a FIFO queue.',
   dfs: 'DFS expands the deepest available node first using a LIFO stack.',
