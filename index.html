@@ -13,7 +13,7 @@
       <span class="brand-mark">AI</span>
       <span>
         <span class="eyebrow">Interactive classroom demos</span>
-        <strong class="brand-title">AI Course (IIT BBSR)</strong>
+        <strong class="brand-title">AI Learning Lab</strong>
       </span>
     </button>
     <div class="header-actions">
@@ -27,7 +27,7 @@
       <div class="hero-section">
         <p class="eyebrow">Artificial Intelligence</p>
         <h1>Learn AI by seeing it work</h1>
-        <p class="subtitle">Choose a topic to explore interactive demonstrations, step-by-step explanations, and visualizations.</p>
+        <p class="subtitle">Choose a topic to explore interactive demonstrations, step-by-step explanations, and classroom-ready visualizations.</p>
       </div>
 
       <div class="module-grid" aria-label="AI learning modules">
@@ -80,42 +80,98 @@
         <div>
           <p class="eyebrow">Module 01</p>
           <h1>Automated Problem Solving</h1>
-          <p class="subtitle">Before choosing a search algorithm, an intelligent agent must first formulate the problem correctly.</p>
+          <p class="subtitle">Explore how different problems are represented through states, actions, transition models, goal tests, and costs.</p>
         </div>
         <button class="primary-button open-search-button" type="button">Continue to Search Techniques</button>
       </div>
 
-      <div class="problem-layout">
-        <article class="problem-example-card">
-          <div class="example-heading">
-            <span class="module-icon" aria-hidden="true">🚗</span>
-            <div>
-              <p class="eyebrow">Example problem</p>
-              <h2>Reach the university from home</h2>
-            </div>
-          </div>
-          <div class="formulation-flow" aria-label="Problem formulation components">
-            <div class="formulation-item"><span>1</span><div><strong>Initial state</strong><p>The agent is at Home.</p></div></div>
-            <div class="flow-arrow">↓</div>
-            <div class="formulation-item"><span>2</span><div><strong>Actions</strong><p>Travel along any available road.</p></div></div>
-            <div class="flow-arrow">↓</div>
-            <div class="formulation-item"><span>3</span><div><strong>Transition model</strong><p>A road moves the agent from one location to another.</p></div></div>
-            <div class="flow-arrow">↓</div>
-            <div class="formulation-item"><span>4</span><div><strong>Goal test</strong><p>Has the agent reached the University?</p></div></div>
-            <div class="flow-arrow">↓</div>
-            <div class="formulation-item"><span>5</span><div><strong>Path cost</strong><p>Total distance, time, or travel expense.</p></div></div>
-          </div>
-        </article>
-
-        <div class="concept-grid">
-          <article class="concept-card"><span class="concept-symbol">S</span><h3>State space</h3><p>All situations the agent may encounter while solving the problem.</p></article>
-          <article class="concept-card"><span class="concept-symbol">A</span><h3>Actions</h3><p>The choices available to the agent in a particular state.</p></article>
-          <article class="concept-card"><span class="concept-symbol">G</span><h3>Goal</h3><p>The desired state or condition that defines successful completion.</p></article>
-          <article class="concept-card"><span class="concept-symbol">C</span><h3>Cost</h3><p>A numerical measure used to compare alternative solution paths.</p></article>
-          <article class="concept-card wide"><h3>Problem-solving agent cycle</h3><div class="agent-cycle"><span>Perceive</span><b>→</b><span>Formulate goal</span><b>→</b><span>Formulate problem</span><b>→</b><span>Search</span><b>→</b><span>Act</span></div></article>
-        </div>
+      <div class="problem-tabs" role="tablist" aria-label="Automated problem-solving demonstrations">
+        <button class="problem-tab active" type="button" data-problem="jug" role="tab" aria-selected="true">💧 Two-Jug Problem</button>
+        <button class="problem-tab" type="button" data-problem="puzzle" role="tab" aria-selected="false">🧩 8-Puzzle Problem</button>
+        <button class="problem-tab" type="button" data-problem="queens" role="tab" aria-selected="false">♛ 8-Queens Problem</button>
       </div>
+
+      <section id="jugDemo" class="problem-demo active" data-problem-panel="jug">
+        <div class="demo-intro">
+          <div><p class="eyebrow">Problem 01</p><h2>Two-Jug Problem</h2><p>Use a 4-litre jug and a 3-litre jug to measure exactly 2 litres in the 4-litre jug.</p></div>
+          <span class="demo-state-code">State: (x, y)</span>
+        </div>
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p>All pairs (x, y), where 0 ≤ x ≤ 4 and 0 ≤ y ≤ 3.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>(0, 0): both jugs are empty.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Fill, empty, or pour water from one jug into the other.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p>x = 2, meaning the 4-litre jug contains exactly 2 litres.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>One unit for every action performed.</p></article>
+          </aside>
+          <div class="demo-workspace">
+            <div class="jug-stage" aria-label="Two water jugs">
+              <div class="jug-unit"><div class="jug-capacity">4 L</div><div class="jug-vessel jug-four"><div id="jugWater4" class="jug-water"></div><span id="jugAmount4">0 L</span></div><strong>Jug A</strong></div>
+              <div class="transfer-symbol">⇄</div>
+              <div class="jug-unit"><div class="jug-capacity">3 L</div><div class="jug-vessel jug-three"><div id="jugWater3" class="jug-water"></div><span id="jugAmount3">0 L</span></div><strong>Jug B</strong></div>
+            </div>
+            <div class="demo-controls action-controls" id="jugActions">
+              <button type="button" data-jug-action="fill4">Fill 4 L</button><button type="button" data-jug-action="fill3">Fill 3 L</button>
+              <button type="button" data-jug-action="empty4">Empty 4 L</button><button type="button" data-jug-action="empty3">Empty 3 L</button>
+              <button type="button" data-jug-action="pour4to3">Pour 4 → 3</button><button type="button" data-jug-action="pour3to4">Pour 3 → 4</button>
+            </div>
+            <div class="demo-controls"><button id="jugSolve" class="primary-button" type="button">Auto solve</button><button id="jugNext" type="button">Next solution step</button><button id="jugReset" type="button">Reset</button></div>
+            <div class="demo-feedback"><div><span>Current state</span><strong id="jugState">(0, 0)</strong></div><div><span>Steps</span><strong id="jugSteps">0</strong></div><p id="jugExplanation" aria-live="polite">Choose a legal action or let BFS find a solution.</p></div>
+            <div><h3>Visited state sequence</h3><div id="jugHistory" class="state-history"><span class="state-chip current-chip">(0, 0)</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="puzzleDemo" class="problem-demo hidden" data-problem-panel="puzzle">
+        <div class="demo-intro">
+          <div><p class="eyebrow">Problem 02</p><h2>8-Puzzle Problem</h2><p>Slide numbered tiles into the blank space until they match the goal arrangement.</p></div>
+          <span class="demo-state-code">State: 3 × 3 board</span>
+        </div>
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p>All reachable arrangements of eight numbered tiles and one blank tile.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>The shuffled board shown in the interactive workspace.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Move the blank Up, Down, Left, or Right when legal.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p>The board equals 1–2–3 / 4–5–6 / 7–8–blank.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>One unit for each tile movement.</p></article>
+          </aside>
+          <div class="demo-workspace">
+            <div class="puzzle-comparison">
+              <div><h3>Current state</h3><div id="puzzleBoard" class="puzzle-board" aria-label="Interactive 8-puzzle board"></div></div>
+              <div><h3>Goal state</h3><div id="puzzleGoal" class="puzzle-board goal-board"></div></div>
+            </div>
+            <p class="demo-hint">Click a tile adjacent to the blank to move it.</p>
+            <div class="demo-controls"><button id="puzzleSolve" class="primary-button" type="button">Auto solve</button><button id="puzzleNext" type="button">Next solution step</button><button id="puzzleShuffle" type="button">New puzzle</button><button id="puzzleReset" type="button">Reset</button></div>
+            <div class="demo-feedback"><div><span>Blank position</span><strong id="puzzleBlank">—</strong></div><div><span>Moves</span><strong id="puzzleMoves">0</strong></div><div><span>Misplaced tiles</span><strong id="puzzleMisplaced">—</strong></div><p id="puzzleExplanation" aria-live="polite">Inspect the state and choose a legal move.</p></div>
+            <div><h3>Recent state transitions</h3><div id="puzzleHistory" class="state-history"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="queensDemo" class="problem-demo hidden" data-problem-panel="queens">
+        <div class="demo-intro">
+          <div><p class="eyebrow">Problem 03</p><h2>8-Queens Problem</h2><p>Place eight queens on the chessboard so that no two queens attack each other.</p></div>
+          <span class="demo-state-code">State: queen positions by column</span>
+        </div>
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p>Partial and complete placements of queens across the board.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>An empty 8 × 8 chessboard.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Place a queen in a safe square of the next column, or backtrack.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p>Eight queens are placed with no shared row, column, or diagonal.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>Usually irrelevant; all valid complete assignments are acceptable.</p></article>
+          </aside>
+          <div class="demo-workspace">
+            <div class="queens-layout"><div id="queensBoard" class="queens-board" aria-label="Interactive 8-queens chessboard"></div><div class="queen-stats"><div><span>Queens placed</span><strong id="queenCount">0 / 8</strong></div><div><span>Conflicting pairs</span><strong id="queenConflicts">0</strong></div><div><span>Search column</span><strong id="queenColumn">1</strong></div><div><span>Backtracks</span><strong id="queenBacktracks">0</strong></div></div></div>
+            <p class="demo-hint">Click any square to add or remove a queen. Red queens are currently in conflict.</p>
+            <div class="demo-controls"><button id="queensSolve" class="primary-button" type="button">Visualize backtracking</button><button id="queensNext" type="button">Next search step</button><button id="queensClear" type="button">Clear board</button></div>
+            <div class="demo-feedback"><p id="queensExplanation" aria-live="polite">Place queens manually, or watch backtracking explore the state space.</p></div>
+            <div><h3>Current state representation</h3><code id="queensState" class="state-code-block">[–, –, –, –, –, –, –, –]</code></div>
+          </div>
+        </div>
+      </section>
     </section>
+
 
     <section id="searchView" class="module-view hidden">
       <div class="module-page-header compact-header">
@@ -157,7 +213,7 @@
     </section>
   </main>
 
-  <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh • Built for interactive classroom demonstrations</footer>
+  <footer>AI Learning Lab • Built for interactive classroom demonstrations</footer>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

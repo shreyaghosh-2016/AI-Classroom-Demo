@@ -90,3 +90,11 @@ Each undirected edge has endpoints and a cost:
 ## License
 
 MIT
+
+## Automated Problem Solving demos
+
+The Automated Problem Solving module now contains interactive demonstrations for:
+
+- Two-Jug Problem: manual legal actions plus BFS solution animation
+- 8-Puzzle: manual tile movement plus shortest-path BFS animation
+- 8-Queens: manual placement plus backtracking-search visualization
