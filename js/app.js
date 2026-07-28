@@ -1,10 +1,329 @@
-import { defaultGraph, cloneGraph, buildAdjacency, generateRandomGraph } from './graph-data.js';
-import { bfs } from './algorithms/bfs.js';
-import { dfs } from './algorithms/dfs.js';
-import { ucs } from './algorithms/ucs.js';
-import { greedy } from './algorithms/greedy.js';
-import { astar } from './algorithms/astar.js';
-import { pathCost } from './algorithms/common.js';
+"use strict";
+
+const defaultGraph = {
+  nodes: [
+    { id: 'A', x: 100, y: 260, h: 10 },
+    { id: 'B', x: 270, y: 120, h: 8 },
+    { id: 'C', x: 270, y: 390, h: 7 },
+    { id: 'D', x: 465, y: 95, h: 6 },
+    { id: 'E', x: 465, y: 265, h: 4 },
+    { id: 'F', x: 465, y: 430, h: 3 },
+    { id: 'G', x: 700, y: 170, h: 2 },
+    { id: 'H', x: 790, y: 355, h: 0 }
+  ],
+  edges: [
+    { from: 'A', to: 'B', cost: 2 },
+    { from: 'A', to: 'C', cost: 4 },
+    { from: 'B', to: 'D', cost: 5 },
+    { from: 'B', to: 'E', cost: 3 },
+    { from: 'C', to: 'E', cost: 1 },
+    { from: 'C', to: 'F', cost: 6 },
+    { from: 'D', to: 'G', cost: 4 },
+    { from: 'E', to: 'G', cost: 2 },
+    { from: 'E', to: 'F', cost: 2 },
+    { from: 'F', to: 'H', cost: 3 },
+    { from: 'G', to: 'H', cost: 2 }
+  ]
+};
+
+function cloneGraph(graph) {
+  return {
+    nodes: graph.nodes.map(node => ({ ...node })),
+    edges: graph.edges.map(edge => ({ ...edge }))
+  };
+}
+
+function buildAdjacency(graph) {
+  const adjacency = Object.fromEntries(graph.nodes.map(node => [node.id, []]));
+  for (const edge of graph.edges) {
+    adjacency[edge.from].push({ node: edge.to, cost: edge.cost });
+    adjacency[edge.to].push({ node: edge.from, cost: edge.cost });
+  }
+  for (const id of Object.keys(adjacency)) {
+    adjacency[id].sort((a, b) => a.node.localeCompare(b.node));
+  }
+  return adjacency;
+}
+
+function generateRandomGraph() {
+  const ids = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  const positions = [
+    [100, 270], [270, 110], [270, 420], [465, 85],
+    [465, 265], [465, 445], [690, 160], [790, 360]
+  ];
+  const nodes = ids.map((id, index) => ({
+    id,
+    x: positions[index][0] + Math.round((Math.random() - 0.5) * 30),
+    y: positions[index][1] + Math.round((Math.random() - 0.5) * 30),
+    h: id === 'H' ? 0 : Math.max(1, 10 - index + Math.floor(Math.random() * 3))
+  }));
+
+  const baseEdges = [
+    ['A', 'B'], ['A', 'C'], ['B', 'D'], ['B', 'E'], ['C', 'E'],
+    ['C', 'F'], ['D', 'G'], ['E', 'G'], ['E', 'F'], ['F', 'H'], ['G', 'H']
+  ];
+  const extraCandidates = [['B', 'C'], ['D', 'E'], ['F', 'G'], ['D', 'H']];
+  const selectedExtras = extraCandidates.filter(() => Math.random() > 0.55);
+  const edges = [...baseEdges, ...selectedExtras].map(([from, to]) => ({
+    from,
+    to,
+    cost: 1 + Math.floor(Math.random() * 8)
+  }));
+
+  return { nodes, edges };
+}
+
+function reconstructPath(parent, goal) {
+  const path = [];
+  let current = goal;
+  while (current !== undefined) {
+    path.unshift(current);
+    current = parent[current];
+  }
+  return path;
+}
+
+function pathCost(path, adjacency) {
+  let total = 0;
+  for (let i = 0; i < path.length - 1; i += 1) {
+    const edge = adjacency[path[i]].find(item => item.node === path[i + 1]);
+    total += edge?.cost ?? 0;
+  }
+  return total;
+}
+
+function makeStep({ current, frontier, explored, parent, costs = {}, explanation, found = false, path = [] }) {
+  return {
+    current,
+    frontier: frontier.map(item => typeof item === 'string' ? item : item.node),
+    explored: [...explored],
+    parent: { ...parent },
+    costs: { ...costs },
+    explanation,
+    found,
+    path: [...path]
+  };
+}
+
+
+function bfs(adjacency, start, goal) {
+  const queue = [start];
+  const discovered = new Set([start]);
+  const explored = [];
+  const parent = {};
+  const steps = [];
+
+  while (queue.length) {
+    const before = [...queue];
+    const current = queue.shift();
+    explored.push(current);
+
+    if (current === goal) {
+      const path = reconstructPath(parent, goal);
+      steps.push(makeStep({
+        current, frontier: queue, explored, parent, found: true, path,
+        explanation: `${current} is the goal. BFS stops and reconstructs the shallowest solution path.`
+      }));
+      return steps;
+    }
+
+    const added = [];
+    for (const neighbor of adjacency[current]) {
+      if (!discovered.has(neighbor.node)) {
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        queue.push(neighbor.node);
+        added.push(neighbor.node);
+      }
+    }
+
+    steps.push(makeStep({
+      current, frontier: queue, explored, parent,
+      explanation: `${current} was removed from the FIFO queue [${before.join(', ')}]. ${added.length ? `New nodes ${added.join(', ')} were appended.` : 'No new nodes were added.'}`
+    }));
+  }
+
+  return steps;
+}
+
+
+function dfs(adjacency, start, goal) {
+  const stack = [start];
+  const discovered = new Set([start]);
+  const explored = [];
+  const parent = {};
+  const steps = [];
+
+  while (stack.length) {
+    const before = [...stack];
+    const current = stack.pop();
+    explored.push(current);
+
+    if (current === goal) {
+      const path = reconstructPath(parent, goal);
+      steps.push(makeStep({
+        current, frontier: stack, explored, parent, found: true, path,
+        explanation: `${current} is the goal. DFS returns the path determined by its last-in, first-out expansion order.`
+      }));
+      return steps;
+    }
+
+    const neighbors = [...adjacency[current]].reverse();
+    const added = [];
+    for (const neighbor of neighbors) {
+      if (!discovered.has(neighbor.node)) {
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        stack.push(neighbor.node);
+        added.push(neighbor.node);
+      }
+    }
+
+    steps.push(makeStep({
+      current, frontier: stack, explored, parent,
+      explanation: `${current} was popped from the LIFO stack [${before.join(', ')}]. ${added.length ? `Nodes ${added.join(', ')} were pushed.` : 'No new nodes were pushed.'}`
+    }));
+  }
+
+  return steps;
+}
+
+
+function ucs(adjacency, start, goal) {
+  const frontier = [{ node: start, priority: 0 }];
+  const costs = { [start]: 0 };
+  const parent = {};
+  const explored = [];
+  const closed = new Set();
+  const steps = [];
+
+  while (frontier.length) {
+    frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
+    const currentItem = frontier.shift();
+    const current = currentItem.node;
+    if (closed.has(current)) continue;
+    closed.add(current);
+    explored.push(current);
+
+    if (current === goal) {
+      const path = reconstructPath(parent, goal);
+      steps.push(makeStep({
+        current, frontier, explored, parent, costs, found: true, path,
+        explanation: `${current} has the lowest cumulative cost g(n)=${costs[current]} and is the goal. UCS has found an optimal path.`
+      }));
+      return steps;
+    }
+
+    const relaxed = [];
+    for (const neighbor of adjacency[current]) {
+      const newCost = costs[current] + neighbor.cost;
+      if (newCost < (costs[neighbor.node] ?? Infinity)) {
+        costs[neighbor.node] = newCost;
+        parent[neighbor.node] = current;
+        frontier.push({ node: neighbor.node, priority: newCost });
+        relaxed.push(`${neighbor.node}: ${newCost}`);
+      }
+    }
+
+    steps.push(makeStep({
+      current, frontier, explored, parent, costs,
+      explanation: `UCS expanded ${current} with g(n)=${costs[current]}. ${relaxed.length ? `Updated costs: ${relaxed.join('; ')}.` : 'No cheaper path was discovered.'}`
+    }));
+  }
+
+  return steps;
+}
+
+
+function greedy(adjacency, heuristics, start, goal) {
+  const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
+  const discovered = new Set([start]);
+  const parent = {};
+  const explored = [];
+  const steps = [];
+
+  while (frontier.length) {
+    frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
+    const currentItem = frontier.shift();
+    const current = currentItem.node;
+    explored.push(current);
+
+    if (current === goal) {
+      const path = reconstructPath(parent, goal);
+      steps.push(makeStep({
+        current, frontier, explored, parent, found: true, path,
+        explanation: `${current} is the goal. Greedy search selected nodes solely using h(n), so the path need not be cheapest.`
+      }));
+      return steps;
+    }
+
+    const added = [];
+    for (const neighbor of adjacency[current]) {
+      if (!discovered.has(neighbor.node)) {
+        discovered.add(neighbor.node);
+        parent[neighbor.node] = current;
+        frontier.push({ node: neighbor.node, priority: heuristics[neighbor.node] ?? 0 });
+        added.push(`${neighbor.node} (h=${heuristics[neighbor.node] ?? 0})`);
+      }
+    }
+
+    steps.push(makeStep({
+      current, frontier, explored, parent,
+      explanation: `Greedy search expanded ${current}, currently the node with smallest h(n). ${added.length ? `Added ${added.join(', ')}.` : 'No new nodes were added.'}`
+    }));
+  }
+
+  return steps;
+}
+
+
+function astar(adjacency, heuristics, start, goal) {
+  const frontier = [{ node: start, priority: heuristics[start] ?? 0 }];
+  const g = { [start]: 0 };
+  const parent = {};
+  const explored = [];
+  const closed = new Set();
+  const steps = [];
+
+  while (frontier.length) {
+    frontier.sort((a, b) => a.priority - b.priority || a.node.localeCompare(b.node));
+    const currentItem = frontier.shift();
+    const current = currentItem.node;
+    if (closed.has(current)) continue;
+    closed.add(current);
+    explored.push(current);
+
+    if (current === goal) {
+      const path = reconstructPath(parent, goal);
+      steps.push(makeStep({
+        current, frontier, explored, parent, costs: g, found: true, path,
+        explanation: `${current} is the goal with g(n)=${g[current]}. A* stops after selecting the lowest f(n)=g(n)+h(n).`
+      }));
+      return steps;
+    }
+
+    const relaxed = [];
+    for (const neighbor of adjacency[current]) {
+      const tentative = g[current] + neighbor.cost;
+      if (tentative < (g[neighbor.node] ?? Infinity)) {
+        g[neighbor.node] = tentative;
+        parent[neighbor.node] = current;
+        closed.delete(neighbor.node);
+        const f = tentative + (heuristics[neighbor.node] ?? 0);
+        frontier.push({ node: neighbor.node, priority: f });
+        relaxed.push(`${neighbor.node}: g=${tentative}, f=${f}`);
+      }
+    }
+
+    steps.push(makeStep({
+      current, frontier, explored, parent, costs: g,
+      explanation: `A* expanded ${current} with g=${g[current]} and h=${heuristics[current] ?? 0}. ${relaxed.length ? `Updated ${relaxed.join('; ')}.` : 'No better route was found.'}`
+    }));
+  }
+
+  return steps;
+}
+
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
