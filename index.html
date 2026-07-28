@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive visualizer for BFS, DFS, UCS, Greedy Best-First Search, and A*." />
+  <title>Search Algorithm Visualizer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div>
+      <p class="eyebrow">AI Search • Classroom Demo</p>
+      <h1>Search Algorithm Visualizer</h1>
+      <p class="subtitle">Explore how the frontier, explored set, path cost, and heuristics change at every step.</p>
+    </div>
+    <button id="themeToggle" class="secondary-button" type="button" aria-label="Toggle theme">Dark mode</button>
+  </header>
+
+  <main class="layout">
+    <aside class="control-panel" aria-label="Visualization controls">
+      <section>
+        <h2>Configuration</h2>
+        <label for="algorithmSelect">Algorithm</label>
+        <select id="algorithmSelect">
+          <option value="bfs">Breadth-First Search</option>
+          <option value="dfs">Depth-First Search</option>
+          <option value="ucs">Uniform-Cost Search</option>
+          <option value="greedy">Greedy Best-First Search</option>
+          <option value="astar">A* Search</option>
+        </select>
+
+        <div class="two-column-controls">
+          <div>
+            <label for="startSelect">Start</label>
+            <select id="startSelect"></select>
+          </div>
+          <div>
+            <label for="goalSelect">Goal</label>
+            <select id="goalSelect"></select>
+          </div>
+        </div>
+
+        <label for="speedRange">Animation speed</label>
+        <div class="range-row">
+          <span>Slow</span>
+          <input id="speedRange" type="range" min="200" max="1600" value="850" step="50" />
+          <span>Fast</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Controls</h2>
+        <div class="button-grid">
+          <button id="runButton" class="primary-button" type="button">Run</button>
+          <button id="stepButton" type="button">Next step</button>
+          <button id="pauseButton" type="button">Pause</button>
+          <button id="resetButton" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Graph presets</h2>
+        <div class="button-grid">
+          <button id="defaultGraphButton" type="button">Default graph</button>
+          <button id="randomGraphButton" type="button">Random graph</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Legend</h2>
+        <ul class="legend-list">
+          <li><span class="legend-dot unvisited"></span>Unvisited</li>
+          <li><span class="legend-dot frontier"></span>Frontier</li>
+          <li><span class="legend-dot current"></span>Current</li>
+          <li><span class="legend-dot visited"></span>Explored</li>
+          <li><span class="legend-dot path"></span>Final path</li>
+          <li><span class="legend-dot goal"></span>Goal</li>
+        </ul>
+      </section>
+    </aside>
+
+    <section class="visualization-area">
+      <div class="graph-toolbar">
+        <div>
+          <h2 id="graphTitle">State-space graph</h2>
+          <p id="algorithmSummary">BFS expands the shallowest unexpanded node first.</p>
+        </div>
+        <div class="status-badge" id="statusBadge" aria-live="polite">Ready</div>
+      </div>
+
+      <div class="graph-shell">
+        <svg id="graphSvg" viewBox="0 0 900 540" role="img" aria-label="Interactive state-space graph"></svg>
+      </div>
+
+      <div class="metrics-grid" aria-live="polite">
+        <article class="metric-card">
+          <span>Current node</span>
+          <strong id="currentMetric">—</strong>
+        </article>
+        <article class="metric-card">
+          <span>Nodes expanded</span>
+          <strong id="expandedMetric">0</strong>
+        </article>
+        <article class="metric-card">
+          <span>Path cost</span>
+          <strong id="costMetric">—</strong>
+        </article>
+        <article class="metric-card">
+          <span>Step</span>
+          <strong id="stepMetric">0 / 0</strong>
+        </article>
+      </div>
+
+      <div class="details-grid">
+        <article class="detail-card">
+          <h3>Frontier</h3>
+          <div id="frontierList" class="token-list"><span class="empty-token">Empty</span></div>
+        </article>
+        <article class="detail-card">
+          <h3>Explored set</h3>
+          <div id="visitedList" class="token-list"><span class="empty-token">Empty</span></div>
+        </article>
+        <article class="detail-card explanation-card">
+          <h3>What happened?</h3>
+          <p id="stepExplanation">Choose an algorithm and press Run or Next step.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Built for classroom demonstrations of uninformed and informed search.
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
