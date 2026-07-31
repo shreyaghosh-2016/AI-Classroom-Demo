@@ -6,6 +6,7 @@
     algorithm: 'hill',
     landscape: [],
     position: 2,
+    startPosition: 2,
     bestPosition: 2,
     iteration: 0,
     temperature: 12,
@@ -141,9 +142,13 @@
               <div class="range-row"><span>Slow</span><input id="localSpeed" type="range" min="150" max="1100" value="550" step="50"><span>Fast</span></div>
             </section>
             <section id="localLandscapeControls">
-              <h3>Landscape</h3>
+              <h3>Landscape and starting state</h3>
               <button id="localRandomLandscape" type="button">Generate new landscape</button>
-              <p>Use the same landscape across algorithms for a direct comparison.</p>
+              <label for="localStartPosition"><strong>Starting position</strong></label>
+              <input id="localStartPosition" type="range" min="0" max="16" value="2" step="1">
+              <p id="localStartLabel">Start at position 2.</p>
+              <button id="localRandomStart" type="button">Choose random initial state</button>
+              <p>Change the starting state to see how the same algorithm can reach a different result on the same landscape.</p>
             </section>
             <section id="annealControls" class="hidden">
               <label for="localTemperature"><strong>Starting temperature</strong></label>
@@ -164,7 +169,7 @@
 
           <div class="local-workspace">
             <div id="landscapeWorkspace" class="local-visual-shell">
-              <svg id="localLandscapeSvg" viewBox="0 0 920 430" role="img" aria-label="Local search optimization landscape"></svg>
+              <svg id="localLandscapeSvg" viewBox="0 0 920 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Smooth local search optimization landscape"></svg>
             </div>
             <div id="beamWorkspace" class="local-visual-shell hidden">
               <svg id="beamSvg" viewBox="0 0 920 500" role="img" aria-label="Beam search tree"></svg>
@@ -203,44 +208,82 @@
   function generateLandscape() {
     const anchors = [3, 8, 5, 12, 7, 17, 10, 14, 9, 22, 13, 18, 8, 15, 6, 11, 4];
     state.landscape = anchors.map((v, i) => Math.max(2, v + Math.floor(Math.random() * 5) - 2 + (i === 9 ? 4 : 0)));
-    state.position = 2;
-    state.bestPosition = 2;
+    const slider = document.getElementById('localStartPosition');
+    if (slider) slider.max = String(state.landscape.length - 1);
+    state.startPosition = Math.min(state.startPosition, state.landscape.length - 1);
+    state.position = state.startPosition;
+    state.bestPosition = state.startPosition;
   }
 
-  function xFor(i) { return 54 + i * 50; }
-  function yFor(score) { return 370 - score * 12; }
+  const chart = { left: 68, right: 858, top: 62, bottom: 390 };
+  function xFor(i) { return chart.left + (chart.right - chart.left) * i / Math.max(1, state.landscape.length - 1); }
+  function yFor(score) {
+    const min = Math.min(...state.landscape);
+    const max = Math.max(...state.landscape);
+    const pad = Math.max(2, (max - min) * 0.18);
+    return chart.bottom - ((score - (min - pad)) / ((max + pad) - (min - pad))) * (chart.bottom - chart.top);
+  }
+
+  function smoothPath(points) {
+    if (points.length < 2) return '';
+    let d = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 0; i < points.length - 1; i++) {
+      const p0 = points[i - 1] || points[i];
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const p3 = points[i + 2] || p2;
+      const c1x = p1.x + (p2.x - p0.x) / 6;
+      const c1y = p1.y + (p2.y - p0.y) / 6;
+      const c2x = p2.x - (p3.x - p1.x) / 6;
+      const c2y = p2.y - (p3.y - p1.y) / 6;
+      d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
+    }
+    return d;
+  }
 
   function renderLandscape() {
     const svg = document.getElementById('localLandscapeSvg');
-    if (!svg) return;
-    const points = state.landscape.map((v, i) => `${xFor(i)},${yFor(v)}`).join(' ');
+    if (!svg || !state.landscape.length) return;
+    const curvePoints = state.landscape.map((v, i) => ({ x: xFor(i), y: yFor(v) }));
+    const curve = smoothPath(curvePoints);
+    const area = `${curve} L ${curvePoints[curvePoints.length - 1].x} ${chart.bottom} L ${curvePoints[0].x} ${chart.bottom} Z`;
     const max = Math.max(...state.landscape);
     const globalIndex = state.landscape.indexOf(max);
     const neighbours = [state.position - 1, state.position + 1].filter(i => i >= 0 && i < state.landscape.length);
+    const gx = xFor(globalIndex), gy = yFor(max);
+    const markerTextY = Math.max(25, gy - 34);
+    const markerLineStart = markerTextY + 8;
+    const markerLineEnd = Math.max(markerLineStart + 10, gy - 13);
     svg.innerHTML = `
       <defs>
         <linearGradient id="localArea" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="var(--local-accent)" stop-opacity=".34" />
-          <stop offset="100%" stop-color="var(--local-accent)" stop-opacity=".04" />
+          <stop offset="0%" stop-color="var(--local-accent)" stop-opacity=".30" />
+          <stop offset="100%" stop-color="var(--local-accent)" stop-opacity=".03" />
         </linearGradient>
+        <clipPath id="localPlotClip"><rect x="${chart.left-15}" y="16" width="${chart.right-chart.left+30}" height="${chart.bottom-4}" rx="12"/></clipPath>
         <marker id="arrowLocal" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
       </defs>
-      <line x1="45" y1="370" x2="875" y2="370" class="local-axis" />
-      <line x1="45" y1="40" x2="45" y2="370" class="local-axis" />
-      <text x="455" y="415" class="local-axis-label">Candidate states / positions</text>
-      <text x="19" y="215" class="local-axis-label" transform="rotate(-90 19 215)">Objective value (higher is better)</text>
-      <polygon points="54,370 ${points} ${xFor(state.landscape.length - 1)},370" fill="url(#localArea)" />
-      <polyline points="${points}" class="local-landscape-line" />
+      <line x1="${chart.left}" y1="${chart.bottom}" x2="${chart.right}" y2="${chart.bottom}" class="local-axis" />
+      <line x1="${chart.left}" y1="${chart.top-18}" x2="${chart.left}" y2="${chart.bottom}" class="local-axis" />
+      <text x="${(chart.left+chart.right)/2}" y="440" class="local-axis-label">Candidate state / position</text>
+      <text x="22" y="228" class="local-axis-label" transform="rotate(-90 22 228)">Objective value (higher is better)</text>
+      <g clip-path="url(#localPlotClip)">
+        <path d="${area}" fill="url(#localArea)" />
+        <path d="${curve}" class="local-landscape-line" />
+      </g>
       ${state.landscape.map((v, i) => {
         const classes = ['local-landscape-point'];
         if (i === state.position) classes.push('current');
+        if (i === state.startPosition) classes.push('start');
         if (i === state.bestPosition) classes.push('best');
         if (neighbours.includes(i)) classes.push('neighbour');
         if (state.tabu.includes(i)) classes.push('tabu');
-        return `<g><circle cx="${xFor(i)}" cy="${yFor(v)}" r="${i === state.position ? 11 : 7}" class="${classes.join(' ')}"/><text x="${xFor(i)}" y="${yFor(v)-16}" class="local-point-label">${v}</text><text x="${xFor(i)}" y="390" class="local-index-label">${i}</text></g>`;
+        const labelY = Math.max(30, yFor(v)-16);
+        return `<g><circle cx="${xFor(i)}" cy="${yFor(v)}" r="${i === state.position ? 11 : 6}" class="${classes.join(' ')}"/><text x="${xFor(i)}" y="${labelY}" class="local-point-label">${v}</text><text x="${xFor(i)}" y="410" class="local-index-label">${i}</text></g>`;
       }).join('')}
-      <g class="local-global-marker"><path d="M ${xFor(globalIndex)} ${yFor(max)-58} L ${xFor(globalIndex)} ${yFor(max)-22}" marker-end="url(#arrowLocal)"/><text x="${xFor(globalIndex)}" y="${yFor(max)-67}" text-anchor="middle">Global maximum</text></g>
-      ${state.algorithm === 'hill' && state.finished && state.position !== globalIndex ? `<text x="${xFor(state.position)}" y="${yFor(state.landscape[state.position])-46}" text-anchor="middle" class="local-stop-label">Stopped at local maximum</text>` : ''}
+      <g class="local-global-marker"><path d="M ${gx} ${markerLineStart} L ${gx} ${markerLineEnd}" marker-end="url(#arrowLocal)"/><text x="${gx}" y="${markerTextY}" text-anchor="middle">Global maximum</text></g>
+      <g class="local-start-marker"><text x="${xFor(state.startPosition)}" y="${Math.min(425, yFor(state.landscape[state.startPosition])+30)}" text-anchor="middle">Start</text></g>
+      ${state.algorithm === 'hill' && state.finished && state.position !== globalIndex ? `<text x="${xFor(state.position)}" y="${Math.max(26,yFor(state.landscape[state.position])-42)}" text-anchor="middle" class="local-stop-label">Local maximum</text>` : ''}
     `;
   }
 
@@ -299,21 +342,25 @@
     state.history = [];
     state.tabu = [];
     state.temperature = Number(document.getElementById('localTemperature')?.value || 12);
+    const startSlider = document.getElementById('localStartPosition');
+    const startLabel = document.getElementById('localStartLabel');
+    if (startSlider) startSlider.value = String(state.startPosition);
+    if (startLabel) startLabel.textContent = `Start at position ${state.startPosition}.`;
     if (state.algorithm === 'beam') createBeamTree();
     else {
       if (!keepLandscape || !state.landscape.length) generateLandscape();
-      state.position = 2;
-      state.bestPosition = 2;
+      state.position = state.startPosition;
+      state.bestPosition = state.startPosition;
     }
     updateAll();
     setExplanation(initialExplanation());
   }
 
   function initialExplanation() {
-    if (state.algorithm === 'hill') return 'The search begins at position 2. Press Next step to compare the two neighbouring states.';
+    if (state.algorithm === 'hill') return `The search begins at position ${state.startPosition}. Press Next step to compare its neighbouring states.`;
     if (state.algorithm === 'anneal') return 'The search begins with a high temperature. Better moves are accepted, and some worse moves may also be accepted.';
     if (state.algorithm === 'beam') return 'The root is the initial candidate. At each level, all successors are scored and only the best k remain active.';
-    return 'The search begins at position 2. Recently visited positions will become temporarily tabu.';
+    return `The search begins at position ${state.startPosition}. Recently visited positions will become temporarily tabu.`;
   }
 
   function stepHill() {
@@ -510,6 +557,18 @@
     document.getElementById('localPause').addEventListener('click', stopTimer);
     document.getElementById('localReset').addEventListener('click', () => resetAlgorithm(true));
     document.getElementById('localRandomLandscape').addEventListener('click', () => resetAlgorithm(false));
+    document.getElementById('localStartPosition').addEventListener('input', e => {
+      state.startPosition = Number(e.target.value);
+      document.getElementById('localStartLabel').textContent = `Start at position ${state.startPosition}.`;
+      resetAlgorithm(true);
+    });
+    document.getElementById('localRandomStart').addEventListener('click', () => {
+      state.startPosition = Math.floor(Math.random() * state.landscape.length);
+      const slider = document.getElementById('localStartPosition');
+      slider.value = String(state.startPosition);
+      document.getElementById('localStartLabel').textContent = `Random start: position ${state.startPosition}.`;
+      resetAlgorithm(true);
+    });
     document.getElementById('localTemperature').addEventListener('input', e => { state.temperature = Number(e.target.value); resetAlgorithm(true); });
     document.getElementById('beamWidth').addEventListener('input', e => { document.getElementById('beamWidthLabel').textContent = `Keep the best ${e.target.value} state${e.target.value === '1' ? '' : 's'} per level.`; resetAlgorithm(true); });
     document.getElementById('tabuLength').addEventListener('input', e => { document.getElementById('tabuLengthLabel').textContent = `Remember the last ${e.target.value} positions.`; resetAlgorithm(true); });
