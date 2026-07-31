@@ -80,7 +80,7 @@
       <div class="module-page-header">
         <div>
           <p class="eyebrow">Module 05</p>
-          <h1>Local Search</h1>
+          <h1>Local Search <span class="local-version-chip">Updated visualization</span></h1>
           <p class="subtitle">Local search focuses on the quality of the current candidate solution. It usually stores little or no path information and is especially useful for optimization problems.</p>
         </div>
         <button class="secondary-button local-home-button" type="button">All modules</button>
