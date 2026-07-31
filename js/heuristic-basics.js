@@ -74,39 +74,49 @@
           <p>A heuristic is not judged only by whether its numbers look sensible. We ask whether those estimates preserve A*'s optimality and whether they behave coherently across edges.</p>
         </div>
 
-        <div class="hb-property-grid">
-          <article class="hb-property-card admissible">
-            <div class="hb-property-title"><span>✓</span><h3>Admissible</h3></div>
-            <p><strong>Rule:</strong> h(n) must never exceed the true cheapest remaining cost h*(n).</p>
-            <div class="hb-equation">0 ≤ h(n) ≤ h*(n)</div>
-            <div class="hb-property-example"><strong>Example:</strong> If the true remaining cost is 7, estimates 0, 4, or 7 are admissible; 9 is not.</div>
-            <div class="hb-importance"><strong>Why required?</strong> An overestimate can make A* ignore a node on the optimal path. For graph search, admissibility alone is not the most convenient guarantee; consistency gives the stronger operational property used below.</div>
+        <div class="hb-property-visual-list">
+          <article class="hb-property-visual-card">
+            <div class="hb-property-copy">
+              <div class="hb-property-title"><span>✓</span><h3>Graph 1 · Admissibility: never overestimate</h3></div>
+              <p><strong>Definition:</strong> a heuristic is admissible when <strong>h(n) ≤ h*(n)</strong> for every node, where h*(n) is the true cheapest remaining cost to a goal.</p>
+              <div class="hb-equation">0 ≤ h(n) ≤ h*(n)</div>
+              <p>In the graph, the true remaining cost from A is 2+3=5. Therefore h(A)=4 is safe, while h(A)=7 is an overestimate.</p>
+              <div class="hb-importance"><strong>Why is it required?</strong> A* uses f(n)=g(n)+h(n). An exaggerated h-value can make a genuinely optimal route appear more expensive than a suboptimal route. Admissibility ensures the heuristic never makes the best possible completion look worse than it really is.</div>
+              <div class="hb-consequence"><strong>Search consequence:</strong> with an admissible heuristic, A* tree search can still guarantee an optimal solution. With an inadmissible heuristic, A* may return a more expensive goal first.</div>
+            </div>
+            <div class="hb-property-graph" id="hbAdmissibleGraph" aria-label="Graph explaining admissible and inadmissible heuristic values"></div>
           </article>
 
-          <article class="hb-property-card consistent">
-            <div class="hb-property-title"><span>↘</span><h3>Consistent (monotone)</h3></div>
-            <p><strong>Rule:</strong> moving across one edge cannot reduce the estimate by more than that edge costs.</p>
-            <div class="hb-equation">h(n) ≤ c(n,n′)+h(n′)</div>
-            <div class="hb-property-example"><strong>Example:</strong> For an edge A → B of cost 3, h(A)=8 and h(B)=6 is valid because 8≤3+6. But h(A)=10 would violate consistency.</div>
-            <div class="hb-importance"><strong>Why required?</strong> It makes f-values non-decreasing along a path. Therefore, when standard A* graph search closes a node, it need not discover a cheaper route to that node later.</div>
+          <article class="hb-property-visual-card">
+            <div class="hb-property-copy">
+              <div class="hb-property-title"><span>↘</span><h3>Graph 2 · Consistency: estimates must agree across every edge</h3></div>
+              <p><strong>Definition:</strong> for every edge n→n′, the estimate at n must be no larger than the edge cost plus the estimate at n′.</p>
+              <div class="hb-equation">h(n) ≤ c(n,n′)+h(n′)</div>
+              <p>For edge A→B of cost 2, h(A)=5 and h(B)=3 satisfy 5≤2+3. But h(A)=7 and h(B)=3 violate the rule because 7&gt;5.</p>
+              <div class="hb-importance"><strong>Why is it required?</strong> Consistency makes f-values non-decreasing along a path. Once standard A* graph search removes the lowest-f node and closes it, a cheaper route to that node will not unexpectedly appear later.</div>
+              <div class="hb-consequence"><strong>Search consequence:</strong> without consistency, A* can still work, but it must be prepared to reopen an already closed node when a better g-value is discovered. Otherwise, optimality can be lost.</div>
+            </div>
+            <div class="hb-property-graph" id="hbConsistentGraph" aria-label="Graph explaining consistent and inconsistent heuristic values"></div>
           </article>
 
-          <article class="hb-property-card relation">
-            <div class="hb-property-title"><span>⇒</span><h3>How they are related</h3></div>
-            <p>If h(goal)=0, every consistent heuristic is also admissible. However, an admissible heuristic can still be inconsistent.</p>
-            <div class="hb-relation-flow"><span>Consistent</span><b>⇒</b><span>Admissible</span><b>⇒</b><span>Optimal A* tree search</span></div>
-            <div class="hb-property-example">For standard A* graph search without reopening closed nodes, consistency is the clean condition that preserves optimality.</div>
-            <div class="hb-importance"><strong>Important:</strong> An inconsistent heuristic can still be used, but the implementation may need to reopen nodes when a better g-value is found.</div>
-          </article>
-
-          <article class="hb-property-card dominance">
-            <div class="hb-property-title"><span>↑</span><h3>More informed / dominance</h3></div>
-            <p>For two admissible heuristics, h₂ dominates h₁ when h₂(n)≥h₁(n) for every node while still never overestimating.</p>
-            <div class="hb-equation">h₁(n) ≤ h₂(n) ≤ h*(n)</div>
-            <div class="hb-property-example"><strong>Example:</strong> Manhattan distance usually dominates misplaced tiles for the 8-puzzle.</div>
-            <div class="hb-importance"><strong>Why useful?</strong> A more informed admissible heuristic generally allows A* to expand no more nodes than a weaker one, apart from tie-breaking effects.</div>
+          <article class="hb-property-visual-card">
+            <div class="hb-property-copy">
+              <div class="hb-property-title"><span>↑</span><h3>Graph 3 · Dominance: prefer the safer heuristic with larger estimates</h3></div>
+              <p><strong>Definition:</strong> if h₁ and h₂ are both admissible and h₂(n)≥h₁(n) for every node, then h₂ dominates h₁.</p>
+              <div class="hb-equation">h₁(n) ≤ h₂(n) ≤ h*(n)</div>
+              <p>The two heuristics in this graph are both safe. However, h₂ is closer to the true remaining costs, so its f-values separate promising and unpromising nodes more clearly.</p>
+              <div class="hb-importance"><strong>Why is it required?</strong> Admissibility tells us whether a heuristic is safe; dominance helps us choose which safe heuristic is more useful. A stronger admissible heuristic usually reduces unnecessary expansion.</div>
+              <div class="hb-consequence"><strong>Search consequence:</strong> A* using a dominating admissible heuristic generally expands no more nodes than A* using the weaker heuristic, apart from tie-breaking among equal f-values.</div>
+            </div>
+            <div class="hb-property-graph" id="hbDominanceGraph" aria-label="Graph comparing a weak and a dominating heuristic"></div>
           </article>
         </div>
+
+        <article class="hb-relation-card">
+          <h3>How the three ideas fit together</h3>
+          <div class="hb-relation-flow"><span>Consistency</span><b>⇒</b><span>Admissibility</span><b>⇒</b><span>Optimal A* tree search</span></div>
+          <p>When h(goal)=0, consistency implies admissibility. For standard graph-search A* that does not reopen closed nodes, consistency is the convenient stronger condition. Dominance is different: it compares two already-safe heuristics and identifies the one that gives better guidance.</p>
+        </article>
       </section>
 
       <section class="hb-checklist-card">
@@ -148,6 +158,7 @@
       </section>`;
 
     setupWorkedExample(root);
+    setupPropertyGraphs(root);
     setupRandomChallenge(root);
   }
 
@@ -220,6 +231,72 @@
       step = (step + 1) % steps.length;
       button.textContent = step === 0 ? 'Explain again' : 'Next step';
     });
+  }
+
+
+  function setupPropertyGraphs(root) {
+    function addText(parent, x, y, value, className, anchor = 'middle') {
+      const text = el('text', { x, y, class: className, 'text-anchor': anchor });
+      text.textContent = value;
+      parent.appendChild(text);
+    }
+
+    function line(svg, a, b, cost, extra = '') {
+      svg.appendChild(el('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: `hb-edge ${extra}`.trim() }));
+      addText(svg, (a.x + b.x) / 2, (a.y + b.y) / 2 - 9, String(cost), 'hb-edge-label');
+    }
+
+    function node(svg, p, label, kind, sublines = []) {
+      const g = el('g', { class: `hb-node-group ${kind}` });
+      g.appendChild(el('circle', { cx: p.x, cy: p.y, r: 27, class: 'hb-node-circle' }));
+      addText(g, p.x, p.y + 5, label, 'hb-node-label');
+      sublines.forEach((txt, i) => addText(g, p.x, p.y + 48 + i * 18, txt, 'hb-node-values'));
+      svg.appendChild(g);
+    }
+
+    // Graph 1: admissibility and the danger of overestimation.
+    {
+      const host = root.querySelector('#hbAdmissibleGraph');
+      const svg = el('svg', { viewBox: '0 0 680 300', role: 'img' });
+      const S={x:55,y:150}, A={x:235,y:75}, B={x:235,y:225}, G={x:610,y:150};
+      line(svg,S,A,2); line(svg,A,G,5); line(svg,S,B,1); line(svg,B,G,7);
+      node(svg,S,'S','start'); node(svg,G,'G','goal');
+      node(svg,A,'A','frontier',['true h*=5','safe h=4 / bad h=7']);
+      node(svg,B,'B','frontier',['true h*=7','h=3']);
+      addText(svg,340,32,'Optimal route cost via A = 2+5 = 7','hb-graph-caption');
+      addText(svg,340,282,'Overestimating A can make the costlier route via B look preferable.','hb-graph-caption');
+      host.appendChild(svg);
+    }
+
+    // Graph 2: consistency and monotone f-values.
+    {
+      const host = root.querySelector('#hbConsistentGraph');
+      const svg = el('svg', { viewBox: '0 0 680 300', role: 'img' });
+      const S={x:55,y:150}, A={x:220,y:150}, B={x:410,y:150}, G={x:610,y:150};
+      line(svg,S,A,2); line(svg,A,B,2); line(svg,B,G,3);
+      node(svg,S,'S','start',['g=0']);
+      node(svg,A,'A','frontier',['g=2','consistent: h=5 → f=7','bad: h=7 → f=9']);
+      node(svg,B,'B','frontier',['g=4','h=3 → f=7']);
+      node(svg,G,'G','goal',['h=0']);
+      addText(svg,315,45,'Consistent case: f(A)=7 and f(B)=7 — f never decreases','hb-graph-caption');
+      addText(svg,315,275,'Inconsistent case: f falls from 9 at A to 7 at B','hb-graph-caption');
+      host.appendChild(svg);
+    }
+
+    // Graph 3: dominance and fewer expansions.
+    {
+      const host = root.querySelector('#hbDominanceGraph');
+      const svg = el('svg', { viewBox: '0 0 680 330', role: 'img' });
+      const S={x:55,y:165}, A={x:225,y:70}, B={x:225,y:165}, C={x:225,y:260}, G={x:610,y:165};
+      line(svg,S,A,2); line(svg,S,B,2); line(svg,S,C,2); line(svg,A,G,4); line(svg,B,G,7); line(svg,C,G,9);
+      node(svg,S,'S','start'); node(svg,G,'G','goal');
+      node(svg,A,'A','frontier',['h*=4','h₁=1, h₂=4']);
+      node(svg,B,'B','frontier',['h*=7','h₁=1, h₂=6']);
+      node(svg,C,'C','frontier',['h*=9','h₁=1, h₂=8']);
+      addText(svg,430,48,'Weak h₁ gives f(A)=f(B)=f(C)=3 — poor guidance','hb-graph-caption');
+      addText(svg,430,292,'Dominating h₂ gives f(A)=6, f(B)=8, f(C)=10','hb-graph-caption');
+      host.appendChild(svg);
+    }
   }
 
   function setupRandomChallenge(root) {
