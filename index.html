@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="heuristic-search.css?v=20260731-1" />
   <link rel="stylesheet" href="local-search-v2.css?v=20260731-2" />
+  <link rel="stylesheet" href="csp.css?v=20260810-2" />
 </head>
 <body>
   <header class="site-header app-header">
@@ -83,6 +84,15 @@
           <strong>Generative AI</strong>
           <span class="module-description">Explore prompting, language models, retrieval, agents, and generation workflows.</span>
         </article>
+
+        <button class="module-card live-module" type="button" data-view="cspView">
+          <span class="module-number">07</span>
+          <span class="module-icon" aria-hidden="true">🕸️</span>
+          <span class="module-status live">Live</span>
+          <strong>Constraint Satisfaction Problems</strong>
+          <span class="module-description">Explore backtracking, forward checking, arc consistency, MRV, LCV, structure, and min-conflicts.</span>
+          <span class="module-link">Open CSP lab →</span>
+        </button>
       </div>
     </section>
 
@@ -510,6 +520,92 @@
       </div>
     </section>
 
+    <section id="cspView" class="module-view hidden csp-view">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 07</p>
+          <h1>Constraint Satisfaction Problems</h1>
+          <p class="subtitle">A simple step-by-step coloring lab: search, backtracking, filtering, propagation, and ordering.</p>
+        </div>
+        <div class="csp-header-badges"><span>Variables</span><span>Domains</span><span>Constraints</span></div>
+      </div>
+
+      <div class="csp-tabs" role="tablist" aria-label="Constraint satisfaction demonstrations">
+        <button class="csp-tab active" type="button" data-csp-demo="bfs">🌊 BFS</button>
+        <button class="csp-tab" type="button" data-csp-demo="dfs">⬇️ DFS</button>
+        <button class="csp-tab" type="button" data-csp-demo="backtracking">↩ Backtracking</button>
+        <button class="csp-tab" type="button" data-csp-demo="forward">✂️ Forward Checking</button>
+        <button class="csp-tab" type="button" data-csp-demo="ac">🔁 Arc Consistency</button>
+        <button class="csp-tab" type="button" data-csp-demo="ordering">🎯 MRV + LCV</button>
+      </div>
+
+      <section class="csp-shell">
+        <aside class="csp-sidebar">
+          <div class="csp-demo-title-row"><span id="cspDemoIcon" class="csp-demo-icon">🌊</span><div><p class="eyebrow">Interactive CSP Lab</p><h2 id="cspDemoTitle">Breadth-First Search (BFS)</h2></div></div>
+          <p id="cspDemoSummary" class="csp-demo-summary">Move through the algorithm one step at a time and watch assignments and domains change.</p>
+
+          <div class="csp-control-block">
+            <h3>Example</h3>
+            <label class="csp-field"><span>Problem</span>
+              <select id="cspProblemSelect" class="csp-select">
+                <option value="australia">Australia constraint graph</option>
+                <option value="graph">Graph coloring example</option>
+              </select>
+            </label>
+            <label id="cspTraversalWrap" class="csp-field"><span>Search method</span>
+              <select id="cspTraversal" class="csp-select">
+                <option value="bfs">Breadth-First Search (BFS)</option>
+                <option value="dfs">Depth-First Search (DFS)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="csp-control-block">
+            <h3>Step controls</h3>
+            <div class="csp-step-buttons">
+              <button id="cspPrev" type="button">← Previous</button>
+              <button id="cspNext" class="primary-button" type="button">Next →</button>
+            </div>
+            <div class="csp-step-buttons">
+              <button id="cspPlay" type="button">▶ Auto play</button>
+              <button id="cspReset" type="button">↺ Reset</button>
+            </div>
+            <label class="csp-speed-label">Animation speed
+              <input id="cspSpeed" type="range" min="350" max="1800" value="950" step="50" />
+            </label>
+          </div>
+
+          <div class="csp-control-block">
+            <div class="csp-progress-head"><h3>Progress</h3><strong id="cspStepLabel">Step 0 / 0</strong></div>
+            <div class="csp-progress"><span id="cspProgressBar"></span></div>
+            <p id="cspStepCaption" class="csp-step-caption">Press Next to begin.</p>
+          </div>
+        </aside>
+
+        <div class="csp-main">
+          <div class="csp-toolbar">
+            <div><p class="eyebrow" id="cspProblemLabel">Australia CSP</p><h2 id="cspProblemTitle">Adjacent regions must have different colors</h2></div>
+            <div class="status-badge" id="cspStatus">Ready</div>
+          </div>
+
+          <div id="cspVisual" class="csp-visual" aria-live="polite"></div>
+
+          <div class="csp-metrics" aria-live="polite">
+            <article><span>Assignments tried</span><strong id="cspAssignments">0</strong></article>
+            <article><span>Backtracks</span><strong id="cspBacktracks">0</strong></article>
+            <article><span>Values pruned</span><strong id="cspPruned">0</strong></article>
+            <article><span>Current conflicts</span><strong id="cspConflicts">0</strong></article>
+          </div>
+
+          <div class="csp-bottom-grid">
+            <article class="csp-info-card"><h3>🧠 What happens in this step?</h3><p id="cspExplanation">Choose an algorithm and move through it one step at a time.</p></article>
+            <article class="csp-info-card"><h3>📦 Remaining domain values</h3><div id="cspDomains" class="csp-domain-panel"></div></article>
+            <article class="csp-info-card"><h3>🎓 Key idea</h3><p id="cspTeachingPoint">The goal is a complete assignment that satisfies all constraints.</p></article>
+          </div>
+        </div>
+      </section>
+    </section>
+
   </main>
 
   <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
@@ -520,5 +616,6 @@
   <script defer src="./js/heuristic-grid.js?v=20260731-1"></script>
   <script defer src="./js/heuristic-race.js?v=20260731-1"></script>
   <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
+  <script defer src="./js/csp.js?v=20260810-3"></script>
 </body>
 </html>
