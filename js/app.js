@@ -391,7 +391,7 @@ const elements = {
   searchTreeMessage: document.querySelector('#searchTreeMessage'), searchExpansionOrder: document.querySelector('#searchExpansionOrder')
 };
 
-const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView'), mazeView: document.querySelector('#mazeView'), cspView: document.querySelector('#cspView') };
+const views = { homeView: document.querySelector('#homeView'), problemView: document.querySelector('#problemView'), searchView: document.querySelector('#searchView'), mazeView: document.querySelector('#mazeView'), cspView: document.querySelector('#cspView'), mdpView: document.querySelector('#mdpView') };
 const homeButton = document.querySelector('#homeButton');
 const brandButton = document.querySelector('#brandButton');
 
@@ -399,7 +399,7 @@ function showView(viewId) {
   stopTimer(); stopProblemDemos();
   Object.entries(views).forEach(([id, view]) => { view.classList.toggle('hidden', id !== viewId); view.classList.toggle('view-active', id === viewId); });
   homeButton.classList.toggle('hidden', viewId === 'homeView');
-  document.title = viewId === 'homeView' ? 'AI Course (IIT BBSR)' : viewId === 'problemView' ? 'Automated Problem Solving | AI Course (IIT BBSR)' : viewId === 'mazeView' ? 'Maze Search | AI Course (IIT BBSR)' : viewId === 'cspView' ? 'Constraint Satisfaction Problems | AI Course (IIT BBSR)' : 'Search Techniques | AI Course (IIT BBSR)';
+  document.title = viewId === 'homeView' ? 'AI Course (IIT BBSR)' : viewId === 'problemView' ? 'Automated Problem Solving | AI Course (IIT BBSR)' : viewId === 'mazeView' ? 'Maze Search | AI Course (IIT BBSR)' : viewId === 'cspView' ? 'Constraint Satisfaction Problems | AI Course (IIT BBSR)' : viewId === 'mdpView' ? 'Markov Decision Processes | AI Course (IIT BBSR)' : 'Search Techniques | AI Course (IIT BBSR)';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (viewId === 'searchView') renderGraph(currentStepIndex >= 0 ? steps[currentStepIndex] : null);
 }
