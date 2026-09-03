@@ -112,6 +112,10 @@
         <button class="mdp-subtab active" type="button" data-mdp-tab="playground" aria-selected="true">🎮 Stochastic Gridworld</button>
         <button class="mdp-subtab" type="button" data-mdp-tab="policy" aria-selected="false">🧭 Explicit Optimal Policy</button>
         <button class="mdp-subtab" type="button" data-mdp-tab="values" aria-selected="false">🔢 V & Q Values</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="evaluation" aria-selected="false">🧮 Policy Evaluation</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="extraction" aria-selected="false">🧭 Policy Extraction</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="vi" aria-selected="false">🔁 Value Iteration</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="pi" aria-selected="false">♻️ Policy Iteration</button>
       </div>
 
       <div id="mdpPlaygroundPanel" class="mdp-tab-panel active">
@@ -296,6 +300,35 @@
             <p id="valueInspectorText">You will see how its four Q-values relate to V(s).</p>
           </div>
         </div>
+
+      </div>
+
+      <div id="mdpEvaluationPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Given π, compute Vπ</p><h2>1. Policy Evaluation</h2><p>Keep the policy fixed and repeatedly update the value of every state. Can you predict which values will change before each sweep?</p></div><div class="algo-formula">V<sup>π</sup>(s) = Σ<sub>s′</sub>P(s′|s,π(s))[R + γV<sup>π</sup>(s′)]</div></div>
+        <div class="algo-controls"><button id="peNext" class="primary-button" type="button">▶ Evaluate one sweep</button><button id="peConverge" class="secondary-button" type="button">Run to convergence</button><button id="peReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">Sweep <strong id="peSweep">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Fixed policy π</h3><p class="algo-small">The arrows do not change during policy evaluation.</p><div id="pePolicyGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Current V<sup>π</sup>(s)</h3><p class="algo-small">Highlighted cells changed in the latest sweep.</p><div id="peValueGrid" class="algo-grid"></div></article></div>
+        <div id="peExplain" class="algo-explain"><strong>Start:</strong> V₀(s)=0. The policy is already given; we are only asking “how good is it?”</div>
+      </div>
+
+      <div id="mdpExtractionPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Given V, recover π</p><h2>2. Policy Extraction</h2><p>The values are already known. For one state at a time, compare all four Q(s,a) values and choose the action with the largest one.</p></div><div class="algo-formula">π(s) = arg max<sub>a</sub> Q(s,a)</div></div>
+        <div class="algo-controls"><button id="pxNext" class="primary-button" type="button">▶ Extract next state</button><button id="pxAll" class="secondary-button" type="button">Reveal all</button><button id="pxReset" class="secondary-button" type="button">↺ Hide policy</button><span class="algo-counter"><strong id="pxCount">0</strong>/9 states</span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Optimal values V*(s)</h3><p class="algo-small">These values are fixed; extraction does not change them.</p><div id="pxValueGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Extracted policy π*(s)</h3><p class="algo-small">Each click reveals one greedy action.</p><div id="pxPolicyGrid" class="algo-grid"></div></article></div>
+        <div id="pxExplain" class="algo-explain"><strong>Can you say which arrow should appear first?</strong> We will calculate Q(s,a) from the displayed V-values, then take arg max.</div>
+      </div>
+
+      <div id="mdpViPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Bellman optimality backups</p><h2>3. Value Iteration — one backup at a time</h2><p>Use <b>Next state backup</b> to update a single state live, or <b>Finish sweep</b> to complete the current iteration. This makes the mechanics visible rather than jumping straight to the answer.</p></div><div class="algo-formula">V<sub>k+1</sub>(s)=max<sub>a</sub> ΣP(s′|s,a)[R+γV<sub>k</sub>(s′)]</div></div>
+        <div class="algo-controls"><button id="viNext" class="primary-button" type="button">▶ Next state backup</button><button id="viSweep" class="secondary-button" type="button">Finish this sweep</button><button id="viConverge" class="secondary-button" type="button">Run to convergence</button><button id="viReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">k = <strong id="viK">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Values being updated</h3><p class="algo-small">Orange = state currently backed up; yellow = already updated in this sweep.</p><div id="viGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Current greedy policy</h3><p class="algo-small">Arrows can change even before the values fully converge.</p><div id="viPolicyGrid" class="algo-grid"></div></article></div>
+        <div id="viExplain" class="algo-explain">Press <strong>Next state backup</strong>. For that state, we compute four Q-values, take the maximum, and store the new V-value.</div>
+      </div>
+
+      <div id="mdpPiPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Evaluate → improve → repeat</p><h2>4. Policy Iteration</h2><p>Watch the two phases alternate. First ask how good the current policy is; then greedily improve the arrows using those values.</p></div><div class="algo-formula">π₀ → Evaluate V<sup>π</sup> → Improve π → repeat</div></div>
+        <div class="algo-controls"><button id="piEval" class="primary-button" type="button">① Evaluate one sweep</button><button id="piImprove" class="primary-button" type="button">② Improve policy</button><button id="piCycle" class="secondary-button" type="button">Run one full cycle</button><button id="piReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">Cycle <strong id="piCycleN">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Current policy π</h3><p class="algo-small">Purple cells show arrows changed by the latest improvement.</p><div id="piPolicyGrid" class="algo-grid"></div></article><article class="algo-card"><h3>V<sup>π</sup>(s)</h3><p class="algo-small">Evaluate this policy before improving it.</p><div id="piValueGrid" class="algo-grid"></div></article></div>
+        <div id="piExplain" class="algo-explain"><strong>Phase 1:</strong> evaluate the current policy. Then click <strong>Improve policy</strong> to replace each action by arg max Q(s,a).</div>
       </div>
     </section>
 

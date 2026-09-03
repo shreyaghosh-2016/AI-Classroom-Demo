@@ -254,3 +254,76 @@
   document.querySelectorAll('[data-value-k]').forEach(b=>b.addEventListener('click',()=>{slider.value=b.dataset.valueK;render(Number(slider.value))}));
   render(0);
 })();
+
+// Four step-by-step planning tabs: policy evaluation, policy extraction, value iteration, policy iteration
+(() => {
+  const panelMap={playground:'mdpPlaygroundPanel',policy:'mdpPolicyPanel',values:'mdpValuesPanel',evaluation:'mdpEvaluationPanel',extraction:'mdpExtractionPanel',vi:'mdpViPanel',pi:'mdpPiPanel'};
+  document.querySelectorAll('[data-mdp-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+    const target=btn.dataset.mdpTab;
+    document.querySelectorAll('[data-mdp-tab]').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-selected',b===btn?'true':'false')});
+    Object.entries(panelMap).forEach(([k,id])=>{const p=document.getElementById(id);if(p){p.classList.toggle('hidden',k!==target);p.classList.toggle('active',k===target)}});
+  }));
+
+  const rows=3,cols=4,wall='2,2',term={'4,3':1,'4,2':-1},A=['up','down','left','right'];
+  const d={up:[0,1],down:[0,-1],left:[-1,0],right:[1,0]}, side={up:['left','right'],down:['right','left'],left:['down','up'],right:['up','down']};
+  const ar={up:'↑',down:'↓',left:'←',right:'→'}, name={up:'Up',down:'Down',left:'Left',right:'Right'};
+  const noise=.2,gamma=.9,living=0, key=(x,y)=>`${x},${y}`;
+  const states=[], nonterm=[]; for(let y=1;y<=rows;y++)for(let x=1;x<=cols;x++){let s=key(x,y);if(s!==wall){states.push(s);if(term[s]==null)nonterm.push(s)}}
+  const displayOrder=[];for(let y=rows;y>=1;y--)for(let x=1;x<=cols;x++)displayOrder.push(key(x,y));
+  function trans(s,a){let [x,y]=s.split(',').map(Number),m=new Map();[[1-noise,a],[noise/2,side[a][0]],[noise/2,side[a][1]]].forEach(([p,aa])=>{let [dx,dy]=d[aa],nx=x+dx,ny=y+dy;if(nx<1||nx>cols||ny<1||ny>rows||key(nx,ny)===wall){nx=x;ny=y}let ns=key(nx,ny);m.set(ns,(m.get(ns)||0)+p)});return [...m].map(([ns,p])=>[p,ns])}
+  function q(V,s,a){return trans(s,a).reduce((z,[p,ns])=>z+p*(living+gamma*V[ns]),0)}
+  function zeroV(){let V={};states.forEach(s=>V[s]=term[s]??0);return V}
+  function fmt(v){return (Math.round(v*100)/100).toFixed(2)}
+  function best(V,s){let qs=Object.fromEntries(A.map(a=>[a,q(V,s,a)])),mx=Math.max(...Object.values(qs));return {a:A.find(a=>Math.abs(qs[a]-mx)<1e-9),qs,v:mx}}
+  function optimalV(){let V=zeroV();for(let k=0;k<200;k++){let N={...V},delta=0;nonterm.forEach(s=>{N[s]=best(V,s).v;delta=Math.max(delta,Math.abs(N[s]-V[s]))});V=N;if(delta<1e-10)break}return V}
+  function cell(s,content,cls=''){let c=document.createElement('div');c.className='algo-cell '+cls;if(s===wall)c.classList.add('wall');else if(term[s]===1)c.classList.add('pos');else if(term[s]===-1)c.classList.add('neg');if(s!==wall){let z=document.createElement('span');z.className=content.type==='arrow'?'algo-arrow':'algo-value';z.textContent=content.text;c.append(z);let co=document.createElement('span');co.className='algo-coord';co.textContent=`(${s})`;c.append(co)}return c}
+  function drawValues(el,V,changed=[],current=null){el.innerHTML='';displayOrder.forEach(s=>{if(s===wall){el.append(cell(s,{type:'v',text:''}));return}let cls=changed.includes(s)?'changed':'';if(s===current)cls='current';el.append(cell(s,{type:'v',text:fmt(V[s])},cls))})}
+  function drawPolicy(el,pi,changed=[],revealed=null){el.innerHTML='';displayOrder.forEach(s=>{if(s===wall){el.append(cell(s,{type:'v',text:''}));return}if(term[s]!=null){el.append(cell(s,{type:'v',text:term[s]>0?'+1':'−1'}));return}let cls=changed.includes(s)?'policy-changed':'';if(revealed && !revealed.has(s))cls+=' hidden-action';el.append(cell(s,{type:'arrow',text:ar[pi[s]]},cls))})}
+  function qHtml(qs){return A.map(a=>`<span class="algo-qline">${ar[a]} ${fmt(qs[a])}</span>`).join('')}
+
+  // 1 Policy Evaluation: fixed policy from R=-0.03 example.
+  const peP=document.getElementById('mdpEvaluationPanel'); if(peP){
+    const pi={'1,1':'up','2,1':'left','3,1':'left','4,1':'left','1,2':'up','3,2':'up','1,3':'right','2,3':'right','3,3':'right'};
+    let V,sweep;
+    const pg=document.getElementById('pePolicyGrid'),vg=document.getElementById('peValueGrid'),ex=document.getElementById('peExplain');
+    function render(ch=[]){drawPolicy(pg,pi);drawValues(vg,V,ch);document.getElementById('peSweep').textContent=sweep}
+    function one(){let N={...V},ch=[];nonterm.forEach(s=>{N[s]=q(V,s,pi[s]);if(Math.abs(N[s]-V[s])>1e-8)ch.push(s)});V=N;sweep++;render(ch);ex.innerHTML=`<strong>Sweep ${sweep}:</strong> every state follows its fixed arrow. ${ch.length?`${ch.length} state values changed.`:'Values are stable.'} No max over actions is used here.`;return ch.length}
+    function reset(){V=zeroV();sweep=0;render();ex.innerHTML='<strong>Start:</strong> V₀(s)=0 for non-terminals. The policy is already given; we are only asking “how good is it?”'}
+    document.getElementById('peNext').onclick=one;document.getElementById('peConverge').onclick=()=>{let n=0;while(one()&&n++<200){};ex.innerHTML=`<strong>Converged after ${sweep} sweeps.</strong> These are V<sup>π</sup> values for this particular fixed policy.`};document.getElementById('peReset').onclick=reset;reset();
+  }
+
+  // 2 Policy extraction from converged optimal values.
+  const pxP=document.getElementById('mdpExtractionPanel'); if(pxP){
+    const V=optimalV(), pi=Object.fromEntries(nonterm.map(s=>[s,best(V,s).a]));let revealed=new Set(),idx=0;
+    const vg=document.getElementById('pxValueGrid'),pg=document.getElementById('pxPolicyGrid'),ex=document.getElementById('pxExplain');
+    function render(){drawValues(vg,V);drawPolicy(pg,pi,[],revealed);document.getElementById('pxCount').textContent=revealed.size}
+    function next(){if(idx>=nonterm.length)return;let s=nonterm[idx++],b=best(V,s);revealed.add(s);render();ex.innerHTML=`<strong>State (${s}):</strong> ${qHtml(b.qs)} → largest is <strong>${ar[b.a]} ${name[b.a]}</strong>, so π*(${s}) = ${ar[b.a]}.`}
+    function reset(){revealed=new Set();idx=0;render();ex.innerHTML='<strong>Can you say which arrow should appear?</strong> We calculate all four Q(s,a) values from V*, then take arg max.'}
+    document.getElementById('pxNext').onclick=next;document.getElementById('pxAll').onclick=()=>{revealed=new Set(nonterm);idx=nonterm.length;render();ex.innerHTML='<strong>Complete:</strong> the optimal policy is the greedy policy with respect to V*.'};document.getElementById('pxReset').onclick=reset;reset();
+  }
+
+  // 3 Value Iteration: synchronous sweep, exposed one state at a time.
+  const viP=document.getElementById('mdpViPanel'); if(viP){
+    let V,oldV,nextV,k,i,done;
+    const vg=document.getElementById('viGrid'),pg=document.getElementById('viPolicyGrid'),ex=document.getElementById('viExplain');
+    function greedyPi(){return Object.fromEntries(nonterm.map(s=>[s,best(V,s).a]))}
+    function render(current=null){drawValues(vg,V,done,current);drawPolicy(pg,greedyPi());document.getElementById('viK').textContent=k}
+    function begin(){if(i===0){oldV={...V};nextV={...V};done=[]}}
+    function one(){begin();let s=nonterm[i],b=best(oldV,s);nextV[s]=b.v;V[s]=b.v;done.push(s);render(s);ex.innerHTML=`<strong>Backup state (${s}) using V<sub>${k}</sub>:</strong> ${qHtml(b.qs)} → max = <strong>${fmt(b.v)}</strong>. This becomes its new value.`;i++;if(i===nonterm.length){V={...nextV};i=0;k++;document.getElementById('viK').textContent=k;ex.innerHTML+=` <strong>Sweep complete → k=${k}.</strong>`}}
+    function finish(){do{one()}while(i!==0)}
+    function reset(){V=zeroV();oldV={...V};nextV={...V};k=0;i=0;done=[];render();ex.innerHTML='Press <strong>Next state backup</strong>. For that state, compute four Q-values using the previous sweep, then keep the maximum.'}
+    document.getElementById('viNext').onclick=one;document.getElementById('viSweep').onclick=finish;document.getElementById('viConverge').onclick=()=>{let prev;do{prev={...V};finish()}while(Math.max(...nonterm.map(s=>Math.abs(V[s]-prev[s])))>1e-8&&k<200);render();ex.innerHTML=`<strong>Converged at k=${k}.</strong> The values are stable and the displayed greedy arrows form the optimal policy.`};document.getElementById('viReset').onclick=reset;reset();
+  }
+
+  // 4 Policy Iteration.
+  const piP=document.getElementById('mdpPiPanel'); if(piP){
+    let V,pi,sweeps,cycles,lastChanged=[];
+    const vg=document.getElementById('piValueGrid'),pg=document.getElementById('piPolicyGrid'),ex=document.getElementById('piExplain');
+    function render(vch=[]){drawPolicy(pg,pi,lastChanged);drawValues(vg,V,vch);document.getElementById('piCycleN').textContent=cycles}
+    function evalSweep(){let N={...V},ch=[];nonterm.forEach(s=>{N[s]=q(V,s,pi[s]);if(Math.abs(N[s]-V[s])>1e-8)ch.push(s)});V=N;sweeps++;lastChanged=[];render(ch);ex.innerHTML=`<strong>Evaluation sweep ${sweeps}:</strong> policy arrows are fixed. ${ch.length} values changed. Repeat evaluation if you want a more accurate V<sup>π</sup>, then improve.`;return ch.length}
+    function improve(){let changed=[];nonterm.forEach(s=>{let a=best(V,s).a;if(a!==pi[s]){pi[s]=a;changed.push(s)}});lastChanged=changed;cycles++;render();ex.innerHTML=changed.length?`<strong>Policy improvement:</strong> ${changed.length} arrow(s) changed (purple). Each was replaced by arg max<sub>a</sub> Q(s,a). Now evaluate the new policy.`:`<strong>Policy stable.</strong> No arrow changed, so policy iteration has reached an optimal policy.`;return changed.length}
+    function evalConverge(){let n=0;while(evalSweep()&&n++<200){}}
+    function reset(){V=zeroV();pi=Object.fromEntries(nonterm.map(s=>[s,'up']));sweeps=0;cycles=0;lastChanged=[];render();ex.innerHTML='<strong>Initial policy:</strong> every non-terminal state chooses ↑ Up. First evaluate how good this policy is.'}
+    document.getElementById('piEval').onclick=evalSweep;document.getElementById('piImprove').onclick=improve;document.getElementById('piCycle').onclick=()=>{evalConverge();improve()};document.getElementById('piReset').onclick=reset;reset();
+  }
+})();
