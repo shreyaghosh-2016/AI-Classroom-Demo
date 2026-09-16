@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="local-search-v2.css?v=20260731-2" />
   <link rel="stylesheet" href="csp.css?v=20260810-2" />
   <link rel="stylesheet" href="mdp.css?v=20260902-4" />
+  <link rel="stylesheet" href="alpha-beta.css?v=20260916-1" />
 </head>
 <body>
   <header class="site-header app-header">
@@ -94,6 +95,15 @@
           <strong>Constraint Satisfaction Problems</strong>
           <span class="module-description">Explore backtracking, forward checking, arc consistency, MRV, LCV, structure, and min-conflicts.</span>
           <span class="module-link">Open CSP lab →</span>
+        </button>
+
+        <button class="module-card live-module" type="button" data-view="alphaBetaView">
+          <span class="module-number">08</span>
+          <span class="module-icon" aria-hidden="true">✂️</span>
+          <span class="module-status live">Live</span>
+          <strong>Alpha–Beta Pruning</strong>
+          <span class="module-description">Watch α and β travel down the game tree, minimax values return upward, and entire branches disappear.</span>
+          <span class="module-link">Open pruning visualizer →</span>
         </button>
       </div>
     </section>
@@ -329,6 +339,45 @@
         <div class="algo-controls"><button id="piEval" class="primary-button" type="button">① Evaluate one sweep</button><button id="piImprove" class="primary-button" type="button">② Improve policy</button><button id="piCycle" class="secondary-button" type="button">Run one full cycle</button><button id="piReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">Cycle <strong id="piCycleN">0</strong></span></div>
         <div class="algo-two"><article class="algo-card"><h3>Current policy π</h3><p class="algo-small">Purple cells show arrows changed by the latest improvement.</p><div id="piPolicyGrid" class="algo-grid"></div></article><article class="algo-card"><h3>V<sup>π</sup>(s)</h3><p class="algo-small">Evaluate this policy before improving it.</p><div id="piValueGrid" class="algo-grid"></div></article></div>
         <div id="piExplain" class="algo-explain"><strong>Phase 1:</strong> evaluate the current policy. Then click <strong>Improve policy</strong> to replace each action by arg max Q(s,a).</div>
+      </div>
+    </section>
+
+
+    <section id="alphaBetaView" class="module-view hidden ab-view">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 08 • Adversarial Search</p>
+          <h1>Alpha–Beta Pruning: Watch the Bounds Move</h1>
+          <p class="subtitle">Depth-first, left-to-right. Follow <b>α</b> and <b>β</b> between decision nodes, visit terminal leaves for their utilities, then watch minimax values propagate upward.</p>
+        </div>
+        <div class="ab-legend"><span class="ab-alpha">α = MAX's guarantee</span><span class="ab-beta">β = MIN's guarantee</span><span class="ab-value">v = node value</span><span class="ab-prune">✂ pruned</span></div>
+      </div>
+
+      <div class="ab-example-tabs" role="tablist" aria-label="Alpha beta pruning examples">
+        <button class="ab-example-tab active" type="button" data-ab-example="one" aria-selected="true">Example 1 • Original tree</button>
+        <button class="ab-example-tab" type="button" data-ab-example="two" aria-selected="false">Example 2 • Mixed terminal depths</button>
+      </div>
+
+      <div class="ab-layout">
+        <aside class="ab-side">
+          <div class="ab-rule-card"><h3>Cutoff rule</h3><div class="ab-cutoff">α ≥ β</div><p>Once the bounds cross, the remaining children cannot affect the final decision.</p></div>
+          <div class="ab-rule-card"><h3>Update at MAX</h3><p><b>v ← max(v, child)</b><br><span class="ab-alpha">α ← max(α, v)</span></p></div>
+          <div class="ab-rule-card"><h3>Update at MIN</h3><p><b>v ← min(v, child)</b><br><span class="ab-beta">β ← min(β, v)</span></p></div>
+          <div class="ab-rule-card ab-key"><h3>Remember</h3><p><b>v is not necessarily α or β.</b> α and β are bounds inherited through the search path.</p></div>
+        </aside>
+
+        <div class="ab-main">
+          <div class="ab-toolbar">
+            <div><span id="abStepBadge" class="status-badge">Ready</span><strong id="abStepTitle">Start at the root</strong></div>
+            <div class="ab-buttons"><button id="abReset" class="secondary-button" type="button">↺ Reset</button><button id="abPrev" class="secondary-button" type="button">← Previous</button><button id="abNext" class="primary-button" type="button">Next step →</button></div>
+          </div>
+          <div class="ab-progress"><div id="abProgressBar"></div></div>
+          <div class="ab-stage"><svg id="abTree" viewBox="0 0 1120 610" role="img" aria-label="Interactive alpha beta pruning game tree"></svg></div>
+          <div class="ab-explain-grid">
+            <article class="ab-explanation"><p class="eyebrow">What just happened?</p><h3 id="abAction">Initialize alpha–beta search</h3><p id="abExplanation">The root is a MAX node. It begins with α = −∞ and β = +∞.</p><div id="abEquation" class="ab-equation">v = −∞, α = −∞, β = +∞</div></article>
+            <article class="ab-explanation"><p class="eyebrow">Search status</p><div class="ab-stats"><div><span>Root best</span><strong id="abRootBest">—</strong></div><div><span>Leaves evaluated</span><strong id="abLeavesSeen">0 / 14</strong></div><div><span>Leaves pruned</span><strong id="abLeavesPruned">0</strong></div></div><p id="abTeachingPoint" class="ab-teaching">Bounds travel downward; evaluated values travel upward.</p></article>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -854,5 +903,6 @@
   <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
   <script defer src="./js/csp.js?v=20260810-3"></script>
   <script defer src="./js/mdp.js?v=20260902-4"></script>
+  <script defer src="./js/alpha-beta.js?v=20260916-1"></script>
 </body>
 </html>
