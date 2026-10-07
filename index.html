@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive AI classroom visualizations for problem solving and search." />
+  <title>AI Course (IIT BBSR)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="heuristic-search.css?v=20260731-1" />
+  <link rel="stylesheet" href="local-search-v2.css?v=20260731-2" />
+  <link rel="stylesheet" href="csp.css?v=20260810-2" />
+</head>
+<body>
+  <header class="site-header app-header">
+    <button id="brandButton" class="brand-button" type="button" aria-label="Go to AI Learning Lab home">
+      <span class="brand-mark">AI</span>
+      <span>
+        <span class="eyebrow">Interactive classroom demos</span>
+        <strong class="brand-title">AI Course (IIT BBSR)</strong>
+      </span>
+    </button>
+    <div class="header-actions">
+      <button id="homeButton" class="secondary-button hidden" type="button">All modules</button>
+      <button id="themeToggle" class="secondary-button" type="button" aria-label="Toggle theme">Dark mode</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="homeView" class="home-view view-active">
+      <div class="hero-section">
+        <p class="eyebrow">Artificial Intelligence</p>
+        <h1>Learn AI by seeing it work</h1>
+        <p class="subtitle">Choose a topic to explore interactive demonstrations, step-by-step explanations, and classroom-ready visualizations.</p>
+      </div>
+
+      <div class="module-grid" aria-label="AI learning modules">
+        <button class="module-card live-module" type="button" data-view="problemView">
+          <span class="module-number">01</span>
+          <span class="module-icon" aria-hidden="true">🧩</span>
+          <span class="module-status live">Live</span>
+          <strong>Automated Problem Solving</strong>
+          <span class="module-description">Understand how an agent converts a real-world task into states, actions, goals, and costs.</span>
+          <span class="module-link">Open module →</span>
+        </button>
+
+        <button class="module-card live-module" type="button" data-view="searchView">
+          <span class="module-number">02</span>
+          <span class="module-icon" aria-hidden="true">🔎</span>
+          <span class="module-status live">Live</span>
+          <strong>Search Techniques</strong>
+          <span class="module-description">Visualize BFS, DFS, IDS, UCS, Greedy Best-First Search, and A* step by step.</span>
+          <span class="module-link">Open visualizer →</span>
+        </button>
+
+        <button class="module-card live-module" type="button" data-view="mazeView">
+          <span class="module-number">03</span>
+          <span class="module-icon" aria-hidden="true">🧭</span>
+          <span class="module-status live">Live</span>
+          <strong>Maze Search</strong>
+          <span class="module-description">Compare how BFS, DFS, and IDS explore the same maze and discover a route to the goal.</span>
+          <span class="module-link">Open maze visualizer →</span>
+        </button>
+
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">04</span>
+          <span class="module-icon" aria-hidden="true">🗺️</span>
+          <span class="module-status soon">Coming soon</span>
+          <strong>Planning</strong>
+          <span class="module-description">Explore actions, preconditions, effects, state transitions, and plan generation.</span>
+        </article>
+
+        <button class="module-card live-module" type="button" data-view="rlView">
+          <span class="module-number">05</span>
+          <span class="module-icon" aria-hidden="true">🎯</span>
+          <span class="module-status live">Live</span>
+          <strong>Reinforcement Learning</strong>
+          <span class="module-description">Learn Q-learning step by step in Gridworld, Cliff &amp; Island, and Pac-Man. Explore rewards, policies, and exploration.</span>
+          <span class="module-link">Open RL lab →</span>
+        </button>
+
+        <article class="module-card locked-module" aria-disabled="true">
+          <span class="module-number">06</span>
+          <span class="module-icon" aria-hidden="true">✨</span>
+          <span class="module-status soon">Coming soon</span>
+          <strong>Generative AI</strong>
+          <span class="module-description">Explore prompting, language models, retrieval, agents, and generation workflows.</span>
+        </article>
+
+        <button class="module-card live-module" type="button" data-view="cspView">
+          <span class="module-number">07</span>
+          <span class="module-icon" aria-hidden="true">🕸️</span>
+          <span class="module-status live">Live</span>
+          <strong>Constraint Satisfaction Problems</strong>
+          <span class="module-description">Explore backtracking, forward checking, arc consistency, MRV, LCV, structure, and min-conflicts.</span>
+          <span class="module-link">Open CSP lab →</span>
+        </button>
+      </div>
+    </section>
+
+    <section id="rlView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div><p class="eyebrow">Module 05</p><h1>Reinforcement Learning</h1>
+        <p class="subtitle">Three worlds. Learn from experience, inspect every Q update, and watch exploration become a policy.</p></div>
+        <a class="secondary-button" href="rl/index.html" target="_blank" rel="noopener">Open full-screen lab ↗</a>
+      </div>
+      <iframe id="rlFrame" title="Interactive Q-learning lab: Gridworld, Cliff and Pac-Man" data-src="rl/index.html" style="display:block;width:100%;height:85vh;min-height:650px;border:1px solid #cbd6df;border-radius:16px;background:#f5f7fa"></iframe>
+    </section>
+
+    <section id="problemView" class="module-view hidden">
+      <div class="module-page-header">
+        <div>
+          <p class="eyebrow">Module 01</p>
+          <h1>Automated Problem Solving</h1>
+          <p class="subtitle">Explore how different problems are represented through states, actions, transition models, goal tests, and costs.</p>
+        </div>
+        <button class="primary-button open-search-button" type="button">Continue to Search Techniques</button>
+      </div>
+
+      <div class="problem-tabs" role="tablist" aria-label="Automated problem-solving demonstrations">
+        <button class="problem-tab active" type="button" data-problem="jug" role="tab" aria-selected="true">💧 Two-Jug Problem</button>
+        <button class="problem-tab" type="button" data-problem="puzzle" role="tab" aria-selected="false">🧩 8-Puzzle Problem</button>
+        <button class="problem-tab" type="button" data-problem="queens" role="tab" aria-selected="false">♛ 8-Queens Problem</button>
+      </div>
+
+      <section id="jugDemo" class="problem-demo active" data-problem-panel="jug">
+        <div class="demo-intro">
+          <div>
+            <p class="eyebrow">Problem 01</p>
+            <h2>Configurable Two-Jug Problem</h2>
+            <p id="jugProblemStatement">Use a 4-litre jug and a 3-litre jug to measure exactly 2 litres in Jug A.</p>
+          </div>
+          <span class="demo-state-code">State: (x, y)</span>
+        </div>
+
+        <div class="jug-config-panel" aria-label="Two-jug problem configuration">
+          <div class="jug-config-heading">
+            <div>
+              <p class="eyebrow">Create a problem instance</p>
+              <h3>Problem Configuration</h3>
+            </div>
+            <label class="graph-toggle">
+              <input id="jugGraphToggle" type="checkbox" checked />
+              <span>Show state-space graph</span>
+            </label>
+          </div>
+
+          <div class="jug-config-grid">
+            <label>
+              <span>Jug A Capacity</span>
+              <select id="jugCapacityA" aria-label="Jug A capacity">
+                <option value="1">1 L</option><option value="2">2 L</option><option value="3">3 L</option>
+                <option value="4" selected>4 L</option><option value="5">5 L</option><option value="6">6 L</option>
+                <option value="7">7 L</option><option value="8">8 L</option><option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <label>
+              <span>Jug B Capacity</span>
+              <select id="jugCapacityB" aria-label="Jug B capacity">
+                <option value="1">1 L</option><option value="2">2 L</option><option value="3" selected>3 L</option>
+                <option value="4">4 L</option><option value="5">5 L</option><option value="6">6 L</option>
+                <option value="7">7 L</option><option value="8">8 L</option><option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <label>
+              <span>Goal Amount</span>
+              <select id="jugGoalAmount" aria-label="Goal amount">
+                <option value="0">0 L</option><option value="1">1 L</option><option value="2" selected>2 L</option>
+                <option value="3">3 L</option><option value="4">4 L</option><option value="5">5 L</option>
+                <option value="6">6 L</option><option value="7">7 L</option><option value="8">8 L</option>
+                <option value="9">9 L</option><option value="10">10 L</option>
+              </select>
+            </label>
+            <fieldset class="jug-target-fieldset">
+              <legend>Measure In</legend>
+              <label><input type="radio" name="jugTarget" value="A" checked /> Jug A</label>
+              <label><input type="radio" name="jugTarget" value="B" /> Jug B</label>
+            </fieldset>
+            <button id="jugGenerate" class="primary-button jug-generate-button" type="button">Generate Problem</button>
+          </div>
+          <p id="jugConfigStatus" class="jug-config-status" aria-live="polite"></p>
+        </div>
+
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p id="jugStateSpaceText">All pairs (x, y), where 0 ≤ x ≤ 4 and 0 ≤ y ≤ 3.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>(0, 0): both jugs are empty.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Fill, empty, or pour water from one jug into the other.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p id="jugGoalTestText">x = 2, meaning Jug A contains exactly 2 litres.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>One unit for every action performed.</p></article>
+          </aside>
+
+          <div class="demo-workspace">
+            <div class="jug-stage" aria-label="Two water jugs">
+              <div class="jug-unit">
+                <div id="jugCapacityLabelA" class="jug-capacity">4 L</div>
+                <div id="jugVesselA" class="jug-vessel jug-four"><div id="jugWater4" class="jug-water"></div><span id="jugAmount4">0 L</span></div>
+                <strong>Jug A</strong>
+              </div>
+              <div class="transfer-symbol">⇄</div>
+              <div class="jug-unit">
+                <div id="jugCapacityLabelB" class="jug-capacity">3 L</div>
+                <div id="jugVesselB" class="jug-vessel jug-three"><div id="jugWater3" class="jug-water"></div><span id="jugAmount3">0 L</span></div>
+                <strong>Jug B</strong>
+              </div>
+            </div>
+
+            <div class="demo-controls action-controls" id="jugActions">
+              <button type="button" data-jug-action="fillA">Fill Jug A</button>
+              <button type="button" data-jug-action="fillB">Fill Jug B</button>
+              <button type="button" data-jug-action="emptyA">Empty Jug A</button>
+              <button type="button" data-jug-action="emptyB">Empty Jug B</button>
+              <button type="button" data-jug-action="pourAtoB">Pour A → B</button>
+              <button type="button" data-jug-action="pourBtoA">Pour B → A</button>
+            </div>
+
+            <div class="demo-controls">
+              <button id="jugSolve" class="primary-button" type="button">Auto solve</button>
+              <button id="jugNext" type="button">Next solution step</button>
+              <button id="jugReset" type="button">Reset</button>
+            </div>
+
+            <div class="demo-feedback">
+              <div><span>Current state</span><strong id="jugState">(0, 0)</strong></div>
+              <div><span>Goal</span><strong id="jugGoalDisplay">(2, *)</strong></div>
+              <div><span>Steps</span><strong id="jugSteps">0</strong></div>
+              <p id="jugExplanation" aria-live="polite">Choose a legal action or let BFS find a solution.</p>
+            </div>
+
+            <section id="jugGraphPanel" class="jug-graph-panel">
+              <div class="jug-graph-header">
+                <div><h3>State-Space Graph</h3><p>Every node is a reachable water distribution. The green route is a shortest BFS solution.</p></div>
+                <div class="jug-graph-legend"><span><i class="graph-key start"></i>Start</span><span><i class="graph-key current"></i>Current</span><span><i class="graph-key goal"></i>Goal</span><span><i class="graph-key route"></i>Solution</span></div>
+              </div>
+              <div class="jug-graph-shell"><svg id="jugStateGraph" viewBox="0 0 900 460" role="img" aria-label="Water-jug state-space graph"></svg></div>
+            </section>
+
+            <div><h3>Visited state sequence</h3><div id="jugHistory" class="state-history"><span class="state-chip current-chip">(0, 0)</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="puzzleDemo" class="problem-demo hidden" data-problem-panel="puzzle">
+        <div class="demo-intro">
+          <div><p class="eyebrow">Problem 02</p><h2>8-Puzzle Problem</h2><p>Slide numbered tiles into the blank space until they match the goal arrangement.</p></div>
+          <span class="demo-state-code">State: 3 × 3 board</span>
+        </div>
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p>All reachable arrangements of eight numbered tiles and one blank tile.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>The shuffled board shown in the interactive workspace.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Move the blank Up, Down, Left, or Right when legal.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p>The board equals 1–2–3 / 4–5–6 / 7–8–blank.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>One unit for each tile movement.</p></article>
+          </aside>
+          <div class="demo-workspace">
+            <div class="puzzle-comparison puzzle-three-state">
+
+  <div class="puzzle-state-panel">
+    <h3>Initial state</h3>
+
+    <div
+      id="puzzleInitial"
+      class="puzzle-board reference-board"
+      aria-label="Initial 8-puzzle state">
+    </div>
+
+    <button
+      id="puzzleEditInitial"
+      class="puzzle-edit-button"
+      type="button">
+      Edit initial state
+    </button>
+  </div>
+
+  <div class="puzzle-state-panel current-puzzle-panel">
+    <h3>Current state</h3>
+
+    <div
+      id="puzzleBoard"
+      class="puzzle-board"
+      aria-label="Interactive current 8-puzzle state">
+    </div>
+  </div>
+
+  <div class="puzzle-state-panel">
+    <h3>Goal state</h3>
+
+    <div
+      id="puzzleGoal"
+      class="puzzle-board goal-board"
+      aria-label="Goal 8-puzzle state">
+    </div>
+  </div>
+
+</div>
+
+<div id="puzzleInitialEditor" class="puzzle-initial-editor hidden">
+
+  <div class="puzzle-editor-heading">
+    <div>
+      <h3>Configure initial state</h3>
+      <p>
+        Select each tile exactly once. Use <strong>Blank</strong> for the empty square.
+      </p>
+    </div>
+  </div>
+
+  <div
+    id="puzzleInitialInputs"
+    class="puzzle-input-grid"
+    aria-label="Initial-state configuration">
+  </div>
+
+  <div class="puzzle-editor-actions">
+    <button
+      id="puzzleApplyInitial"
+      class="primary-button"
+      type="button">
+      Apply initial state
+    </button>
+
+    <button
+      id="puzzleCancelInitial"
+      type="button">
+      Cancel
+    </button>
+  </div>
+
+  <p id="puzzleInitialError" class="puzzle-input-error" aria-live="polite"></p>
+
+</div>
+
+<p class="demo-hint">
+  Click a tile adjacent to the blank to move it. The initial state remains
+  visible while the current state changes.
+</p>
+            <div class="demo-controls"><button id="puzzleSolve" class="primary-button" type="button">Auto solve</button><button id="puzzleNext" type="button">Next solution step</button><button id="puzzleShuffle" type="button">New puzzle</button><button id="puzzleReset" type="button">Reset</button></div>
+            <div class="demo-feedback"><div><span>Blank position</span><strong id="puzzleBlank">—</strong></div><div><span>Moves</span><strong id="puzzleMoves">0</strong></div><div><span>Misplaced tiles</span><strong id="puzzleMisplaced">—</strong></div><p id="puzzleExplanation" aria-live="polite">Inspect the state and choose a legal move.</p></div>
+          <div>
+  <h3>Recent moves</h3>
+  <div id="puzzleHistory" class="state-history puzzle-move-history"></div>
+</div>  
+          </div>
+        </div>
+      </section>
+
+      <section id="queensDemo" class="problem-demo hidden" data-problem-panel="queens">
+        <div class="demo-intro">
+          <div><p class="eyebrow">Problem 03</p><h2>8-Queens Problem</h2><p>Place eight queens on the chessboard so that no two queens attack each other.</p></div>
+          <span class="demo-state-code">State: queen positions by column</span>
+        </div>
+        <div class="demo-grid">
+          <aside class="demo-sidebar">
+            <article class="definition-card"><strong>State space</strong><p>Partial and complete placements of queens across the board.</p></article>
+            <article class="definition-card"><strong>Initial state</strong><p>An empty 8 × 8 chessboard.</p></article>
+            <article class="definition-card"><strong>Actions</strong><p>Place a queen in a safe square of the next column, or backtrack.</p></article>
+            <article class="definition-card"><strong>Goal test</strong><p>Eight queens are placed with no shared row, column, or diagonal.</p></article>
+            <article class="definition-card"><strong>Path cost</strong><p>Usually irrelevant; all valid complete assignments are acceptable.</p></article>
+          </aside>
+          <div class="demo-workspace">
+            <div class="queens-layout"><div id="queensBoard" class="queens-board" aria-label="Interactive 8-queens chessboard"></div><div class="queen-stats"><div><span>Queens placed</span><strong id="queenCount">0 / 8</strong></div><div><span>Conflicting pairs</span><strong id="queenConflicts">0</strong></div><div><span>Search column</span><strong id="queenColumn">1</strong></div><div><span>Backtracks</span><strong id="queenBacktracks">0</strong></div></div></div>
+            <p class="demo-hint">Click any square to add or remove a queen. Red queens are currently in conflict.</p>
+            <div class="demo-controls"><button id="queensSolve" class="primary-button" type="button">Visualize backtracking</button><button id="queensNext" type="button">Next search step</button><button id="queensClear" type="button">Clear board</button></div>
+            <div class="demo-feedback"><p id="queensExplanation" aria-live="polite">Place queens manually, or watch backtracking explore the state space.</p></div>
+            <div><h3>Current state representation</h3><code id="queensState" class="state-code-block">[–, –, –, –, –, –, –, –]</code></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+
+    <section id="searchView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 02</p>
+          <h1>Search Algorithm Visualizer</h1>
+          <p class="subtitle">Explore how the frontier, explored set, path cost, and heuristics change at every step.</p>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="control-panel" aria-label="Visualization controls">
+          <section>
+            <h2>Configuration</h2>
+            <label for="algorithmSelect">Algorithm</label>
+            <select id="algorithmSelect">
+              <option value="bfs">Breadth-First Search</option>
+              <option value="dfs">Depth-First Search</option>
+              <option value="ids">Iterative Deepening Search</option>
+              <option value="ucs">Uniform-Cost Search</option>
+              <option value="greedy">Greedy Best-First Search</option>
+              <option value="astar">A* Search</option>
+            </select>
+            <div class="two-column-controls">
+              <div><label for="startSelect">Start node</label><select id="startSelect"></select></div>
+              <div><label>Goal node(s)</label><div id="goalSelect" class="goal-checkbox-list" aria-label="Select one or more goal nodes"></div></div>
+            </div>
+            <label for="speedRange">Animation speed</label>
+            <div class="range-row"><span>Slow</span><input id="speedRange" type="range" min="200" max="1600" value="850" step="50" /><span>Fast</span></div>
+          </section>
+          <section><h2>Controls</h2><div class="button-grid"><button id="runButton" class="primary-button" type="button">Run</button><button id="stepButton" type="button">Next step</button><button id="pauseButton" type="button">Pause</button><button id="resetButton" type="button">Reset</button></div></section>
+          <section>
+            <h2>Graph source</h2>
+            <div class="button-grid">
+              <button id="defaultGraphButton" type="button">Default graph</button>
+              <button id="randomGraphButton" type="button">Random graph</button>
+              <button id="drawGraphButton" type="button">Draw your own</button>
+              <button id="clearGraphButton" type="button">Clear drawing</button>
+            </div>
+            <div id="graphEditorControls" class="graph-editor-controls hidden">
+              <p class="editor-help">Click empty canvas space to add a node. Click one node and then another to connect them. Drag nodes to reposition them.</p>
+              <label for="edgeCostInput">New edge cost
+                <input id="edgeCostInput" type="number" min="1" max="99" value="1" />
+              </label>
+              <div class="button-grid">
+                <button id="deleteNodeButton" type="button">Delete selected</button>
+                <button id="finishDrawingButton" class="primary-button" type="button">Finish drawing</button>
+              </div>
+            </div>
+          </section>
+          <section><h2>Legend</h2><ul class="legend-list"><li><span class="legend-dot unvisited"></span>Unvisited</li><li><span class="legend-dot frontier"></span>Frontier</li><li><span class="legend-dot current"></span>Current</li><li><span class="legend-dot visited"></span>Explored</li><li><span class="legend-dot path"></span>Final path</li><li><span class="legend-dot goal"></span>Goal</li></ul></section>
+        </aside>
+
+        <section class="visualization-area">
+          <div class="graph-toolbar"><div><h2 id="graphTitle">State-space graph</h2><p id="algorithmSummary">BFS expands the shallowest unexpanded node first.</p></div><div class="status-badge" id="statusBadge" aria-live="polite">Ready</div></div>
+          <div class="graph-shell"><svg id="graphSvg" viewBox="0 0 900 540" role="img" aria-label="Interactive state-space graph"></svg></div>
+          <div class="metrics-grid" aria-live="polite"><article class="metric-card"><span>Current node</span><strong id="currentMetric">—</strong></article><article class="metric-card"><span>Nodes expanded</span><strong id="expandedMetric">0</strong></article><article class="metric-card"><span>Path cost</span><strong id="costMetric">—</strong></article><article class="metric-card"><span>Step</span><strong id="stepMetric">0 / 0</strong></article></div>
+          <div class="details-grid"><article class="detail-card"><h3>Frontier</h3><div id="frontierList" class="token-list"><span class="empty-token">Empty</span></div></article><article class="detail-card"><h3>Explored set</h3><div id="visitedList" class="token-list"><span class="empty-token">Empty</span></div></article><article class="detail-card explanation-card"><h3>What happened?</h3><p id="stepExplanation">Choose an algorithm and press Run or Next step.</p></article></div>
+          <section id="searchTreePanel" class="search-tree-panel hidden" aria-live="polite">
+            <div class="search-tree-heading">
+              <div>
+                <p class="eyebrow">Search result</p>
+                <h2>Generated search tree</h2>
+                <p id="searchTreeMessage">The tree will appear after the search finishes.</p>
+              </div>
+            </div>
+            <div class="search-tree-shell">
+              <svg id="searchTreeSvg" role="img" aria-label="Search tree generated by the selected algorithm"></svg>
+            </div>
+            <div>
+              <h3>Expansion order</h3>
+              <div id="searchExpansionOrder" class="token-list"></div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </section>
+
+
+    <section id="mazeView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 03</p>
+          <h1>Maze Search Visualizer</h1>
+          <p class="subtitle">Watch BFS, DFS, and IDS explore identical maze states using different frontier strategies.</p>
+        </div>
+      </div>
+
+      <div class="maze-layout">
+        <aside class="control-panel maze-controls" aria-label="Maze visualization controls">
+          <section>
+            <h2>Configuration</h2>
+            <label for="mazeAlgorithm">Algorithm</label>
+            <select id="mazeAlgorithm">
+              <option value="bfs">Breadth-First Search</option>
+              <option value="dfs">Depth-First Search</option>
+              <option value="ids">Iterative Deepening Search</option>
+            </select>
+            <label for="mazeSpeed">Animation speed</label>
+            <div class="range-row"><span>Slow</span><input id="mazeSpeed" type="range" min="10" max="180" value="65" step="5" /><span>Fast</span></div>
+          </section>
+
+          <section>
+            <h2>Controls</h2>
+            <div class="button-grid">
+              <button id="mazeRun" class="primary-button" type="button">Run</button>
+              <button id="mazeStep" type="button">Next step</button>
+              <button id="mazePause" type="button">Pause</button>
+              <button id="mazeReset" type="button">Reset search</button>
+            </div>
+          </section>
+
+          <section>
+            <h2>Maze source</h2>
+            <div class="button-grid">
+              <button id="mazeDefault" type="button">Default maze</button>
+              <button id="mazeRandom" type="button">New random maze</button>
+            </div>
+            <p class="editor-help">The same maze can be reused with different algorithms for a fair comparison.</p>
+          </section>
+
+          <section>
+            <h2>Legend</h2>
+            <ul class="maze-legend">
+              <li><span class="maze-key wall"></span>Wall</li>
+              <li><span class="maze-key frontier"></span>Frontier</li>
+              <li><span class="maze-key explored"></span>Explored</li>
+              <li><span class="maze-key current"></span>Current</li>
+              <li><span class="maze-key path"></span>Final path</li>
+              <li><span class="maze-key start"></span>Start</li>
+              <li><span class="maze-key goal"></span>Goal</li>
+            </ul>
+          </section>
+        </aside>
+
+        <section class="maze-workspace">
+          <div class="graph-toolbar">
+            <div><h2 id="mazeTitle">Breadth-First Search</h2><p id="mazeSummary">BFS expands cells level by level using a FIFO queue.</p></div>
+            <div class="status-badge" id="mazeStatus" aria-live="polite">Ready</div>
+          </div>
+
+          <div class="maze-shell">
+            <div id="mazeGrid" class="maze-grid" role="grid" aria-label="Maze search grid"></div>
+          </div>
+
+          <div class="metrics-grid maze-metrics" aria-live="polite">
+            <article class="metric-card"><span>Current cell</span><strong id="mazeCurrent">—</strong></article>
+            <article class="metric-card"><span>Nodes expanded</span><strong id="mazeExpanded">0</strong></article>
+            <article class="metric-card"><span>Frontier size</span><strong id="mazeFrontierSize">0</strong></article>
+            <article class="metric-card"><span>Path length</span><strong id="mazePathLength">—</strong></article>
+            <article class="metric-card"><span>Depth limit</span><strong id="mazeDepthLimit">—</strong></article>
+          </div>
+
+          <div class="details-grid">
+            <article class="detail-card"><h3>Frontier preview</h3><div id="mazeFrontier" class="token-list"><span class="empty-token">Empty</span></div></article>
+            <article class="detail-card"><h3>Expansion order</h3><div id="mazeOrder" class="token-list"><span class="empty-token">Empty</span></div></article>
+            <article class="detail-card explanation-card"><h3>What happened?</h3><p id="mazeExplanation">Choose an algorithm and press Run or Next step.</p></article>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="cspView" class="module-view hidden csp-view">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 07</p>
+          <h1>Constraint Satisfaction Problems</h1>
+          <p class="subtitle">A simple step-by-step coloring lab: search, backtracking, filtering, propagation, and ordering.</p>
+        </div>
+        <div class="csp-header-badges"><span>Variables</span><span>Domains</span><span>Constraints</span></div>
+      </div>
+
+      <div class="csp-tabs" role="tablist" aria-label="Constraint satisfaction demonstrations">
+        <button class="csp-tab active" type="button" data-csp-demo="bfs">🌊 BFS</button>
+        <button class="csp-tab" type="button" data-csp-demo="dfs">⬇️ DFS</button>
+        <button class="csp-tab" type="button" data-csp-demo="backtracking">↩ Backtracking</button>
+        <button class="csp-tab" type="button" data-csp-demo="forward">✂️ Forward Checking</button>
+        <button class="csp-tab" type="button" data-csp-demo="ac">🔁 Arc Consistency</button>
+        <button class="csp-tab" type="button" data-csp-demo="ordering">🎯 MRV + LCV</button>
+      </div>
+
+      <section class="csp-shell">
+        <aside class="csp-sidebar">
+          <div class="csp-demo-title-row"><span id="cspDemoIcon" class="csp-demo-icon">🌊</span><div><p class="eyebrow">Interactive CSP Lab</p><h2 id="cspDemoTitle">Breadth-First Search (BFS)</h2></div></div>
+          <p id="cspDemoSummary" class="csp-demo-summary">Move through the algorithm one step at a time and watch assignments and domains change.</p>
+
+          <div class="csp-control-block">
+            <h3>Example</h3>
+            <label class="csp-field"><span>Problem</span>
+              <select id="cspProblemSelect" class="csp-select">
+                <option value="australia">Australia constraint graph</option>
+                <option value="graph">Graph coloring example</option>
+              </select>
+            </label>
+            <label id="cspTraversalWrap" class="csp-field"><span>Search method</span>
+              <select id="cspTraversal" class="csp-select">
+                <option value="bfs">Breadth-First Search (BFS)</option>
+                <option value="dfs">Depth-First Search (DFS)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="csp-control-block">
+            <h3>Step controls</h3>
+            <div class="csp-step-buttons">
+              <button id="cspPrev" type="button">← Previous</button>
+              <button id="cspNext" class="primary-button" type="button">Next →</button>
+            </div>
+            <div class="csp-step-buttons">
+              <button id="cspPlay" type="button">▶ Auto play</button>
+              <button id="cspReset" type="button">↺ Reset</button>
+            </div>
+            <label class="csp-speed-label">Animation speed
+              <input id="cspSpeed" type="range" min="350" max="1800" value="950" step="50" />
+            </label>
+          </div>
+
+          <div class="csp-control-block">
+            <div class="csp-progress-head"><h3>Progress</h3><strong id="cspStepLabel">Step 0 / 0</strong></div>
+            <div class="csp-progress"><span id="cspProgressBar"></span></div>
+            <p id="cspStepCaption" class="csp-step-caption">Press Next to begin.</p>
+          </div>
+        </aside>
+
+        <div class="csp-main">
+          <div class="csp-toolbar">
+            <div><p class="eyebrow" id="cspProblemLabel">Australia CSP</p><h2 id="cspProblemTitle">Adjacent regions must have different colors</h2></div>
+            <div class="status-badge" id="cspStatus">Ready</div>
+          </div>
+
+          <div id="cspVisual" class="csp-visual" aria-live="polite"></div>
+
+          <div class="csp-metrics" aria-live="polite">
+            <article><span>Assignments tried</span><strong id="cspAssignments">0</strong></article>
+            <article><span>Backtracks</span><strong id="cspBacktracks">0</strong></article>
+            <article><span>Values pruned</span><strong id="cspPruned">0</strong></article>
+            <article><span>Current conflicts</span><strong id="cspConflicts">0</strong></article>
+          </div>
+
+          <div class="csp-bottom-grid">
+            <article class="csp-info-card"><h3>🧠 What happens in this step?</h3><p id="cspExplanation">Choose an algorithm and move through it one step at a time.</p></article>
+            <article class="csp-info-card"><h3>📦 Remaining domain values</h3><div id="cspDomains" class="csp-domain-panel"></div></article>
+            <article class="csp-info-card"><h3>🎓 Key idea</h3><p id="cspTeachingPoint">The goal is a complete assignment that satisfies all constraints.</p></article>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </main>
+
+  <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
+  <script defer src="./js/app.js?v=20260729-3"></script>
+  <script defer src="./js/heuristic-search.js?v=20260731-1"></script>
+  <script defer src="./js/heuristic-basics.js?v=20260731-1"></script>
+  <script defer src="./js/heuristic-puzzle.js?v=20260731-1"></script>
+  <script defer src="./js/heuristic-grid.js?v=20260731-1"></script>
+  <script defer src="./js/heuristic-race.js?v=20260731-1"></script>
+  <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
+  <script defer src="./js/csp.js?v=20260810-3"></script>
+  <script defer src="./js/rl-module.js?v=20261007-1"></script>
+</body>
+</html>
