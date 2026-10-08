@@ -99,7 +99,7 @@
       </div>
     </section>
 
-<section id="probView" class="module-view hidden prob-lab"><div class="module-page-header"><div><p class="eyebrow">Module 08</p><h1>Probabilistic AI</h1><p class="subtitle">Observe evidence. Update beliefs. Discover when variables are independent.</p></div></div><div class="prob-tabs" role="tablist" aria-label="Probability demonstrations"><button id="prob-tab-alarm" role="tab" aria-selected="true" aria-controls="prob-alarm">Alarm Network Explorer</button><button id="prob-tab-independence" role="tab" aria-selected="false" aria-controls="prob-independence">Conditional Independence Playground</button></div><div id="prob-alarm" role="tabpanel" aria-labelledby="prob-tab-alarm"></div><div id="prob-independence" role="tabpanel" aria-labelledby="prob-tab-independence" hidden></div></section>
+<section id="probView" class="module-view hidden prob-lab"><div class="module-page-header"><div><p class="eyebrow">Module 08</p><h1>Probabilistic AI</h1><p class="subtitle">Observe evidence. Update beliefs. Discover when variables are independent.</p></div></div><div class="prob-tabs" role="tablist" aria-label="Probability demonstrations"><button id="prob-tab-alarm" role="tab" aria-selected="true" aria-controls="prob-alarm">Alarm Network Explorer</button><button id="prob-tab-independence" role="tab" aria-selected="false" aria-controls="prob-independence">Conditional Independence Playground</button></div><div id="prob-alarm" role="tabpanel" aria-labelledby="prob-tab-alarm"><p id="prob-loading" class="prob-card" role="status">Loading the probability lab… If this message remains, fully extract the ZIP and keep the probability folder alongside index.html.</p></div><div id="prob-independence" role="tabpanel" aria-labelledby="prob-tab-independence" hidden></div></section>
     <section id="rlView" class="module-view hidden">
       <div class="module-page-header compact-header">
         <div><p class="eyebrow">Module 05</p><h1>Reinforcement Learning</h1>
@@ -631,7 +631,25 @@
   <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
   <script defer src="./js/csp.js?v=20260810-3"></script>
   <script defer src="./js/rl-module.js?v=20261007-1"></script>
-<script src="probability/engine.js"></script>
-<script src="probability/app.js"></script>
+<script>
+(function(){
+ var problem='';
+ function report(message){
+  problem=message;
+  var node=document.getElementById('prob-load-error');
+  if(!node){node=document.createElement('p');node.id='prob-load-error';node.className='prob-card';node.setAttribute('role','alert');document.getElementById('probView').appendChild(node);}
+  node.textContent='The probability lab could not load: '+message+'. Fully extract the ZIP, keep its folders together, and reopen index.html.';
+ }
+ window.addEventListener('error',function(event){
+  var source=event.filename || (event.target && event.target.src) || '';
+  if(source.indexOf('probability/')!==-1) report(event.message || 'A required script is missing or blocked');
+ },true);
+ window.addEventListener('load',function(){
+  if(!window.ProbabilityEngine || document.getElementById('prob-loading'))report(problem || 'Required module files did not initialize');
+ });
+})();
+</script>
+<script src="probability/engine.js?v=compat2"></script>
+<script src="probability/app.js?v=compat2"></script>
 </body>
 </html>

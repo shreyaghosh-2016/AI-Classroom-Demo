@@ -70,3 +70,5 @@ Open the Probabilistic AI card from the homepage. No installation or API key is 
 - Suggested classroom sequence: John calls → Both call → Alarm sounds → Alarm + earthquake; then chain/fork with the middle node observed; collider with no evidence, collider observed, and descendant observed.
 
 New modules use the existing theme. No projector modifications are included.
+
+Compatibility update: avoids structuredClone and Array.at in the probability module. Extract the entire ZIP before opening index.html; preserve the probability folder. Failed script loads now show an explanation.
