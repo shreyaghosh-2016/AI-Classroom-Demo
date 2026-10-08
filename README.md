@@ -59,3 +59,14 @@ edits to `index.html` or `js/app.js`, merge those changes rather than replacing 
 with this older snapshot. GitHub Pages uses the same static hosting setup.
 Rebuild the lab after editing its source: `python3 rl/build.py`.
 Run RL tests: `node --test rl/tests/*.test.js`.
+
+
+## Probabilistic AI module
+Open the Probabilistic AI card from the homepage. No installation or API key is needed.
+
+- Alarm Network Explorer: true/false/unknown evidence, query selection, editable CPTs, exact posterior probabilities, explaining-away presets, enumeration steps, and joint-assignment products.
+- Conditional Independence Playground: chain, fork, collider with descendant, and Asia network; evidence selection, prediction/reveal, and every-path inspection.
+- Click graph nodes or use the selectors. Unknown means unobserved.
+- Suggested classroom sequence: John calls → Both call → Alarm sounds → Alarm + earthquake; then chain/fork with the middle node observed; collider with no evidence, collider observed, and descendant observed.
+
+New modules use the existing theme. No projector modifications are included.

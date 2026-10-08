@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="heuristic-search.css?v=20260731-1" />
   <link rel="stylesheet" href="local-search-v2.css?v=20260731-2" />
   <link rel="stylesheet" href="csp.css?v=20260810-2" />
+<link rel="stylesheet" href="probability/style.css" />
 </head>
 <body>
   <header class="site-header app-header">
@@ -94,9 +95,11 @@
           <span class="module-description">Explore backtracking, forward checking, arc consistency, MRV, LCV, structure, and min-conflicts.</span>
           <span class="module-link">Open CSP lab →</span>
         </button>
+<button class="module-card live-module" type="button" data-view="probView"><span class="module-number">08</span><span class="module-icon" aria-hidden="true">🎲</span><span class="module-status live">Live</span><strong>Probabilistic AI</strong><span class="module-description">Explore Bayesian evidence, the alarm network, and conditional independence step by step.</span><span class="module-link">Open probability lab →</span></button>
       </div>
     </section>
 
+<section id="probView" class="module-view hidden prob-lab"><div class="module-page-header"><div><p class="eyebrow">Module 08</p><h1>Probabilistic AI</h1><p class="subtitle">Observe evidence. Update beliefs. Discover when variables are independent.</p></div></div><div class="prob-tabs" role="tablist" aria-label="Probability demonstrations"><button id="prob-tab-alarm" role="tab" aria-selected="true" aria-controls="prob-alarm">Alarm Network Explorer</button><button id="prob-tab-independence" role="tab" aria-selected="false" aria-controls="prob-independence">Conditional Independence Playground</button></div><div id="prob-alarm" role="tabpanel" aria-labelledby="prob-tab-alarm"></div><div id="prob-independence" role="tabpanel" aria-labelledby="prob-tab-independence" hidden></div></section>
     <section id="rlView" class="module-view hidden">
       <div class="module-page-header compact-header">
         <div><p class="eyebrow">Module 05</p><h1>Reinforcement Learning</h1>
@@ -628,5 +631,7 @@
   <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
   <script defer src="./js/csp.js?v=20260810-3"></script>
   <script defer src="./js/rl-module.js?v=20261007-1"></script>
+<script src="probability/engine.js"></script>
+<script src="probability/app.js"></script>
 </body>
 </html>
