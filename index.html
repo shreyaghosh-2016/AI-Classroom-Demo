@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="local-search-v2.css?v=20260731-2" />
   <link rel="stylesheet" href="csp.css?v=20260810-2" />
 <link rel="stylesheet" href="probability/style.css" />
+  <link rel="stylesheet" href="mdp.css?v=20260902-4" />
 </head>
 <body>
   <header class="site-header app-header">
@@ -70,8 +71,16 @@
           <span class="module-description">Explore actions, preconditions, effects, state transitions, and plan generation.</span>
         </article>
 
-        <button class="module-card live-module" type="button" data-view="rlView">
+                <button class="module-card live-module" type="button" data-view="mdpView">
           <span class="module-number">05</span>
+          <span class="module-icon" aria-hidden="true">🎯</span>
+          <span class="module-status live">Live</span>
+          <strong>Markov Decision Processes</strong>
+          <span class="module-description">Explore stochastic Gridworld, rewards, transitions, values, policy evaluation, value iteration, and policy iteration.</span>
+          <span class="module-link">Open MDP lab →</span>
+        </button>
+<button class="module-card live-module" type="button" data-view="rlView">
+          <span class="module-number">06</span>
           <span class="module-icon" aria-hidden="true">🎯</span>
           <span class="module-status live">Live</span>
           <strong>Reinforcement Learning</strong>
@@ -80,7 +89,7 @@
         </button>
 
         <article class="module-card locked-module" aria-disabled="true">
-          <span class="module-number">06</span>
+          <span class="module-number">07</span>
           <span class="module-icon" aria-hidden="true">✨</span>
           <span class="module-status soon">Coming soon</span>
           <strong>Generative AI</strong>
@@ -88,21 +97,22 @@
         </article>
 
         <button class="module-card live-module" type="button" data-view="cspView">
-          <span class="module-number">07</span>
+          <span class="module-number">08</span>
           <span class="module-icon" aria-hidden="true">🕸️</span>
           <span class="module-status live">Live</span>
           <strong>Constraint Satisfaction Problems</strong>
           <span class="module-description">Explore backtracking, forward checking, arc consistency, MRV, LCV, structure, and min-conflicts.</span>
           <span class="module-link">Open CSP lab →</span>
         </button>
-<button class="module-card live-module" type="button" data-view="probView"><span class="module-number">08</span><span class="module-icon" aria-hidden="true">🎲</span><span class="module-status live">Live</span><strong>Probabilistic AI</strong><span class="module-description">Explore Bayesian evidence, the alarm network, and conditional independence step by step.</span><span class="module-link">Open probability lab →</span></button>
+<button class="module-card live-module" type="button" data-view="probView"><span class="module-number">09</span><span class="module-icon" aria-hidden="true">🎲</span><span class="module-status live">Live</span><strong>Probabilistic AI</strong><span class="module-description">Explore Bayesian evidence, the alarm network, and conditional independence step by step.</span><span class="module-link">Open probability lab →</span></button>
+      
       </div>
     </section>
 
-<section id="probView" class="module-view hidden prob-lab"><div class="module-page-header"><div><p class="eyebrow">Module 08</p><h1>Probabilistic AI</h1><p class="subtitle">Observe evidence. Update beliefs. Discover when variables are independent.</p></div></div><div class="prob-tabs" role="tablist" aria-label="Probability demonstrations"><button id="prob-tab-alarm" role="tab" aria-selected="true" aria-controls="prob-alarm">Alarm Network Explorer</button><button id="prob-tab-independence" role="tab" aria-selected="false" aria-controls="prob-independence">Conditional Independence Playground</button></div><div id="prob-alarm" role="tabpanel" aria-labelledby="prob-tab-alarm"><p id="prob-loading" class="prob-card" role="status">Loading the probability lab… If this message remains, fully extract the ZIP and keep the probability folder alongside index.html.</p></div><div id="prob-independence" role="tabpanel" aria-labelledby="prob-tab-independence" hidden></div></section>
+<section id="probView" class="module-view hidden prob-lab"><div class="module-page-header"><div><p class="eyebrow">Module 09</p><h1>Probabilistic AI</h1><p class="subtitle">Observe evidence. Update beliefs. Discover when variables are independent.</p></div></div><div class="prob-tabs" role="tablist" aria-label="Probability demonstrations"><button id="prob-tab-alarm" role="tab" aria-selected="true" aria-controls="prob-alarm">Alarm Network Explorer</button><button id="prob-tab-independence" role="tab" aria-selected="false" aria-controls="prob-independence">Conditional Independence Playground</button></div><div id="prob-alarm" role="tabpanel" aria-labelledby="prob-tab-alarm"><p id="prob-loading" class="prob-card" role="status">Loading the probability lab… If this message remains, fully extract the ZIP and keep the probability folder alongside index.html.</p></div><div id="prob-independence" role="tabpanel" aria-labelledby="prob-tab-independence" hidden></div></section>
     <section id="rlView" class="module-view hidden">
       <div class="module-page-header compact-header">
-        <div><p class="eyebrow">Module 05</p><h1>Reinforcement Learning</h1>
+        <div><p class="eyebrow">Module 06</p><h1>Reinforcement Learning</h1>
         <p class="subtitle">Three worlds. Learn from experience, inspect every Q update, and watch exploration become a policy.</p></div>
         <a class="secondary-button" href="rl/index.html" target="_blank" rel="noopener">Open full-screen lab ↗</a>
       </div>
@@ -619,6 +629,240 @@
       </section>
     </section>
 
+    <section id="mdpView" class="module-view hidden">
+      <div class="module-page-header compact-header">
+        <div>
+          <p class="eyebrow">Module 05 • MDP</p>
+          <h1>Stochastic Gridworld Lab</h1>
+          <p class="subtitle">Choose an action, watch nature sample the outcome, and connect every move to the MDP tuple ⟨S, A, T, R, γ⟩.</p>
+        </div>
+        <div class="mdp-badges"><span>State s</span><span>Action a</span><span>P(s′|s,a)</span><span>Reward R</span></div>
+      </div>
+
+      <div class="mdp-subtabs" role="tablist" aria-label="MDP demonstrations">
+        <button class="mdp-subtab active" type="button" data-mdp-tab="playground" aria-selected="true">🎮 Stochastic Gridworld</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="policy" aria-selected="false">🧭 Explicit Optimal Policy</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="values" aria-selected="false">🔢 V & Q Values</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="evaluation" aria-selected="false">🧮 Policy Evaluation</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="extraction" aria-selected="false">🧭 Policy Extraction</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="vi" aria-selected="false">🔁 Value Iteration</button>
+        <button class="mdp-subtab" type="button" data-mdp-tab="pi" aria-selected="false">♻️ Policy Iteration</button>
+      </div>
+
+      <div id="mdpPlaygroundPanel" class="mdp-tab-panel active">
+      <div class="mdp-layout">
+        <aside class="mdp-console-panel">
+          <div class="mdp-console-head"><span class="terminal-dot"></span><strong>MDP Episode Monitor</strong><span id="mdpStatus" class="mdp-status">READY</span></div>
+          <div class="mdp-metrics">
+            <article><span>Step</span><strong id="mdpStep">0</strong></article>
+            <article><span>Last reward</span><strong id="mdpReward">0.00</strong></article>
+            <article><span>Total return</span><strong id="mdpReturn">0.00</strong></article>
+            <article><span>State</span><strong id="mdpState">(3,1)</strong></article>
+          </div>
+          <div class="mdp-action-card">
+            <div><span>You chose</span><strong id="mdpChosenAction">—</strong></div>
+            <div><span>What actually happened</span><strong id="mdpActualAction">—</strong></div>
+            <p id="mdpTeaching">Choose a direction to begin.</p>
+          </div>
+          <div class="mdp-model-card">
+            <h3>Why can the move change?</h3>
+            <p class="mdp-model-explain">With <strong>noise = 0.20</strong>, the action you choose happens <strong>80% of the time</strong>. In the remaining <strong>20%</strong>, the agent may move to either side instead: <strong>10% one side + 10% the other side</strong>.</p>
+            <div class="mdp-prob-row"><span>Chosen action happens</span><strong id="mdpIntendedPct">80%</strong></div>
+            <div class="prob-bar"><span id="mdpProbBar"></span></div>
+            <div class="mdp-prob-row"><span>Otherwise, one of the two side directions</span><strong id="mdpSlipPct">10% one side + 10% other side</strong></div>
+          </div>
+          <h3 class="mdp-log-title">Step-by-step episode</h3>
+          <div id="mdpLog" class="mdp-log" aria-live="polite"></div>
+          <div class="mdp-equation">Discounted return: G ← G + γ<sup>t</sup>R</div>
+        </aside>
+
+        <div class="mdp-world-panel">
+          <div class="mdp-toolbar">
+            <div><p class="eyebrow">Interactive MDP Playground</p><h2>Move the agent</h2></div>
+            <button id="mdpReset" class="secondary-button" type="button">↺ Reset episode</button>
+          </div>
+
+          <div class="mdp-world-wrap">
+            <div id="mdpGrid" class="mdp-grid" tabindex="0" aria-label="Interactive stochastic gridworld. Use arrow keys to move."></div>
+            <div class="mdp-controls" aria-label="Gridworld movement controls">
+              <button data-mdp-action="up" type="button">↑<small>Up</small></button>
+              <button data-mdp-action="left" type="button">←<small>Left</small></button>
+              <button data-mdp-action="down" type="button">↓<small>Down</small></button>
+              <button data-mdp-action="right" type="button">→<small>Right</small></button>
+            </div>
+          </div>
+
+          <div class="mdp-settings">
+            <label>Noise <strong id="mdpNoiseLabel">0.20</strong><input id="mdpNoise" type="range" min="0" max="0.8" value="0.2" step="0.05"></label>
+            <label>Discount γ <strong id="mdpDiscountLabel">0.90</strong><input id="mdpDiscount" type="range" min="0" max="1" value="0.9" step="0.05"></label>
+            <label>Living reward <strong id="mdpLivingLabel">0.00</strong><input id="mdpLiving" type="range" min="-1" max="0.5" value="0" step="0.05"></label>
+          </div>
+
+          <div class="mdp-teaching-grid">
+            <article><span>🎯 Goal</span><strong>Reach +1</strong><p>Try to reach the green terminal state while avoiding −1.</p></article>
+            <article><span>🧊 Ice hole</span><strong>Blocked cell</strong><p>The agent cannot enter the frozen hole, so it stays in place if a move points there.</p></article>
+            <article><span>🎲 Uncertainty</span><strong>Same choice, different result</strong><p>At noise = 0.20, the chosen action happens 80% of the time. The other 20% is split between the two side directions.</p></article>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div id="mdpPolicyPanel" class="mdp-tab-panel hidden">
+        <div class="policy-intro">
+          <div>
+            <p class="eyebrow">Policy = action to take in every state</p>
+            <h2>Change the living reward → change the optimal policy</h2>
+            <p>Can you say what the agent should do in each state before revealing the answer? Here the transition model stays fixed: the intended action succeeds with <strong>80% probability</strong>, while the remaining <strong>20%</strong> is split equally between the two side directions (<strong>10% + 10%</strong>). Only the living reward changes.</p>
+          </div>
+          <div class="policy-key">
+            <span><b>→</b> action</span><span class="key-goal">+1 goal</span><span class="key-danger">−1 danger</span><span class="key-hole">🧊 ice hole</span>
+          </div>
+        </div>
+
+        <div class="policy-compare" id="policyCompare">
+          <article class="policy-card" data-policy-r="-0.01">
+            <div class="policy-card-head"><span>Living reward</span><strong>R(s) = −0.01</strong></div>
+            <div class="policy-predict">
+              <span>🤔 Can you predict the arrows first?</span>
+              <button class="policy-reveal-button" type="button" data-reveal-policy="r001">Show explicit policy when R(s) = −0.01</button>
+            </div>
+            <div class="policy-answer hidden" data-policy-answer="r001">
+              <div class="policy-grid" data-policy="r001" aria-label="Optimal policy for living reward minus 0.01"></div>
+              <p class="policy-caption"><strong>Small step cost:</strong> the agent is willing to take a safer, longer route around the −1 state.</p>
+            </div>
+          </article>
+          <article class="policy-card" data-policy-r="-0.03">
+            <div class="policy-card-head"><span>Living reward</span><strong>R(s) = −0.03</strong></div>
+            <div class="policy-predict">
+              <span>🤔 Can you predict the arrows first?</span>
+              <button class="policy-reveal-button" type="button" data-reveal-policy="r003">Show explicit policy when R(s) = −0.03</button>
+            </div>
+            <div class="policy-answer hidden" data-policy-answer="r003">
+              <div class="policy-grid" data-policy="r003" aria-label="Optimal policy for living reward minus 0.03"></div>
+              <p class="policy-caption"><strong>Moderate step cost:</strong> some states switch direction because extra steps now matter more.</p>
+            </div>
+          </article>
+          <article class="policy-card" data-policy-r="-0.4">
+            <div class="policy-card-head"><span>Living reward</span><strong>R(s) = −0.4</strong></div>
+            <div class="policy-predict">
+              <span>🤔 Can you predict the arrows first?</span>
+              <button class="policy-reveal-button" type="button" data-reveal-policy="r04">Show explicit policy when R(s) = −0.4</button>
+            </div>
+            <div class="policy-answer hidden" data-policy-answer="r04">
+              <div class="policy-grid" data-policy="r04" aria-label="Optimal policy for living reward minus 0.4"></div>
+              <p class="policy-caption"><strong>Large step cost:</strong> reaching a terminal state quickly becomes much more important.</p>
+            </div>
+          </article>
+          <article class="policy-card" data-policy-r="-2.0">
+            <div class="policy-card-head"><span>Living reward</span><strong>R(s) = −2.0</strong></div>
+            <div class="policy-predict">
+              <span>🤔 Can you predict the arrows first?</span>
+              <button class="policy-reveal-button" type="button" data-reveal-policy="r20">Show explicit policy when R(s) = −2.0</button>
+            </div>
+            <div class="policy-answer hidden" data-policy-answer="r20">
+              <div class="policy-grid" data-policy="r20" aria-label="Optimal policy for living reward minus 2.0"></div>
+              <p class="policy-caption"><strong>Huge step cost:</strong> the agent may prefer the nearby −1 terminal rather than keep paying −2 each step.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="policy-teaching-callout" id="policyTeachingCallout">
+          <div class="policy-callout-icon">💡</div>
+          <div><strong>Can you say why the arrows change even though the transition probabilities stay the same?</strong> <span>An optimal policy depends on the <b>reward function</b>, not only on the map.</span></div>
+        </div>
+      </div>
+
+      <div id="mdpValuesPanel" class="mdp-tab-panel hidden">
+        <div class="values-intro">
+          <div>
+            <p class="eyebrow">Value iteration • watch estimates propagate</p>
+            <h2>How do V(s) and Q(s,a) evolve?</h2>
+            <p>Move the iteration control and watch the values update. <strong>V(s)</strong> tells us how good a state is when we act optimally; <strong>Q(s,a)</strong> tells us how good one particular action is from that state. These are <strong>value-iteration steps (k)</strong>, not sampled episodes.</p>
+          </div>
+          <div class="values-fixed-model">
+            <span>Noise <strong>0.20</strong></span>
+            <span>Discount γ <strong>0.90</strong></span>
+            <span>Living reward <strong>0.00</strong></span>
+          </div>
+        </div>
+
+        <div class="values-controller">
+          <div class="values-k-readout">
+            <span>Show values after</span>
+            <strong><span id="mdpIterationNumber">0</span> iterations</strong>
+          </div>
+          <input id="mdpIterationSlider" type="range" min="0" max="100" value="0" step="1" aria-label="Value iteration count">
+          <div class="values-quick-buttons" aria-label="Quick iteration choices">
+            <button type="button" data-value-k="0">k = 0</button>
+            <button type="button" data-value-k="1">1</button>
+            <button type="button" data-value-k="2">2</button>
+            <button type="button" data-value-k="3">3</button>
+            <button type="button" data-value-k="5">5</button>
+            <button type="button" data-value-k="10">10</button>
+            <button type="button" data-value-k="100">Converged ≈ 100</button>
+          </div>
+          <p class="values-hint">Can you predict which cells will change first when k increases? Reward information spreads backward from the terminal states.</p>
+        </div>
+
+        <div class="values-two-up">
+          <article class="values-card">
+            <div class="values-card-head">
+              <div><span>State value</span><h3>V<sub>k</sub>(s)</h3></div>
+              <div class="value-formula">V(s) = max<sub>a</sub> Q(s,a)</div>
+            </div>
+            <div id="mdpVGrid" class="value-grid" aria-label="Gridworld state values"></div>
+            <p class="values-caption">The number in each cell is the best expected discounted return available from that state.</p>
+          </article>
+
+          <article class="values-card">
+            <div class="values-card-head">
+              <div><span>Action value</span><h3>Q<sub>k</sub>(s,a)</h3></div>
+              <div class="value-formula">Q(s,a) = Σ P(s′|s,a)[R + γV(s′)]</div>
+            </div>
+            <div id="mdpQGrid" class="qvalue-grid" aria-label="Gridworld action values"></div>
+            <p class="values-caption">Each non-terminal cell has four action values. The <strong>largest Q-value</strong> determines V(s) and the greedy action.</p>
+          </article>
+        </div>
+
+        <div class="value-inspector">
+          <div class="value-inspector-icon">🔎</div>
+          <div>
+            <strong id="valueInspectorTitle">Click any non-terminal cell</strong>
+            <p id="valueInspectorText">You will see how its four Q-values relate to V(s).</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="mdpEvaluationPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Given π, compute Vπ</p><h2>1. Policy Evaluation</h2><p>Keep the policy fixed and repeatedly update the value of every state. Can you predict which values will change before each sweep?</p></div><div class="algo-formula">V<sup>π</sup>(s) = Σ<sub>s′</sub>P(s′|s,π(s))[R + γV<sup>π</sup>(s′)]</div></div>
+        <div class="algo-controls"><button id="peNext" class="primary-button" type="button">▶ Evaluate one sweep</button><button id="peConverge" class="secondary-button" type="button">Run to convergence</button><button id="peReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">Sweep <strong id="peSweep">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Fixed policy π</h3><p class="algo-small">The arrows do not change during policy evaluation.</p><div id="pePolicyGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Current V<sup>π</sup>(s)</h3><p class="algo-small">Highlighted cells changed in the latest sweep.</p><div id="peValueGrid" class="algo-grid"></div></article></div>
+        <div id="peExplain" class="algo-explain"><strong>Start:</strong> V₀(s)=0. The policy is already given; we are only asking “how good is it?”</div>
+      </div>
+
+      <div id="mdpExtractionPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Given V, recover π</p><h2>2. Policy Extraction</h2><p>The values are already known. For one state at a time, compare all four Q(s,a) values and choose the action with the largest one.</p></div><div class="algo-formula">π(s) = arg max<sub>a</sub> Q(s,a)</div></div>
+        <div class="algo-controls"><button id="pxNext" class="primary-button" type="button">▶ Extract next state</button><button id="pxAll" class="secondary-button" type="button">Reveal all</button><button id="pxReset" class="secondary-button" type="button">↺ Hide policy</button><span class="algo-counter"><strong id="pxCount">0</strong>/9 states</span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Optimal values V*(s)</h3><p class="algo-small">These values are fixed; extraction does not change them.</p><div id="pxValueGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Extracted policy π*(s)</h3><p class="algo-small">Each click reveals one greedy action.</p><div id="pxPolicyGrid" class="algo-grid"></div></article></div>
+        <div id="pxExplain" class="algo-explain"><strong>Can you say which arrow should appear first?</strong> We will calculate Q(s,a) from the displayed V-values, then take arg max.</div>
+      </div>
+
+      <div id="mdpViPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Bellman optimality backups</p><h2>3. Value Iteration — one backup at a time</h2><p>Use <b>Next state backup</b> to update a single state live, or <b>Finish sweep</b> to complete the current iteration. This makes the mechanics visible rather than jumping straight to the answer.</p></div><div class="algo-formula">V<sub>k+1</sub>(s)=max<sub>a</sub> ΣP(s′|s,a)[R+γV<sub>k</sub>(s′)]</div></div>
+        <div class="algo-controls"><button id="viNext" class="primary-button" type="button">▶ Next state backup</button><button id="viSweep" class="secondary-button" type="button">Finish this sweep</button><button id="viConverge" class="secondary-button" type="button">Run to convergence</button><button id="viReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">k = <strong id="viK">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Values being updated</h3><p class="algo-small">Orange = state currently backed up; yellow = already updated in this sweep.</p><div id="viGrid" class="algo-grid"></div></article><article class="algo-card"><h3>Current greedy policy</h3><p class="algo-small">Arrows can change even before the values fully converge.</p><div id="viPolicyGrid" class="algo-grid"></div></article></div>
+        <div id="viExplain" class="algo-explain">Press <strong>Next state backup</strong>. For that state, we compute four Q-values, take the maximum, and store the new V-value.</div>
+      </div>
+
+      <div id="mdpPiPanel" class="mdp-tab-panel hidden algo-panel">
+        <div class="algo-intro"><div><p class="eyebrow">Evaluate → improve → repeat</p><h2>4. Policy Iteration</h2><p>Watch the two phases alternate. First ask how good the current policy is; then greedily improve the arrows using those values.</p></div><div class="algo-formula">π₀ → Evaluate V<sup>π</sup> → Improve π → repeat</div></div>
+        <div class="algo-controls"><button id="piEval" class="primary-button" type="button">① Evaluate one sweep</button><button id="piImprove" class="primary-button" type="button">② Improve policy</button><button id="piCycle" class="secondary-button" type="button">Run one full cycle</button><button id="piReset" class="secondary-button" type="button">↺ Reset</button><span class="algo-counter">Cycle <strong id="piCycleN">0</strong></span></div>
+        <div class="algo-two"><article class="algo-card"><h3>Current policy π</h3><p class="algo-small">Purple cells show arrows changed by the latest improvement.</p><div id="piPolicyGrid" class="algo-grid"></div></article><article class="algo-card"><h3>V<sup>π</sup>(s)</h3><p class="algo-small">Evaluate this policy before improving it.</p><div id="piValueGrid" class="algo-grid"></div></article></div>
+        <div id="piExplain" class="algo-explain"><strong>Phase 1:</strong> evaluate the current policy. Then click <strong>Improve policy</strong> to replace each action by arg max Q(s,a).</div>
+      </div>
+    </section>
+
   </main>
 
   <footer>AI Course (IIT BBSR) • Dr. Shreya Ghosh</footer>
@@ -630,6 +874,7 @@
   <script defer src="./js/heuristic-race.js?v=20260731-1"></script>
   <script defer src="./js/local-search-v2.js?v=20260731-2"></script>
   <script defer src="./js/csp.js?v=20260810-3"></script>
+  <script defer src="./js/mdp.js?v=20261011-1"></script>
   <script defer src="./js/rl-module.js?v=20261007-1"></script>
 <script>
 (function(){
